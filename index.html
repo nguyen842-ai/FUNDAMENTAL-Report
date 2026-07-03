@@ -53,7 +53,7 @@
         .spinner-ring:nth-child(2) { border-bottom-color: var(--secondary); animation: spin-reverse 1.2s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
-        .loader-text { color: var(--primary); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; animation: pulse 1s infinite; }
+        .loader-text { color: var(--primary); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; animation: pulse 1s infinite; text-align: center;}
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         /* =========================================================
@@ -198,7 +198,7 @@
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="label" data-i18n="kpiDropF4Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (F4)</div>
+                <div class="label" data-i18n="kpiDropF4Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F4)</div>
                 <div class="value" id="val-drop-f4">0</div>
                 <div class="sub">
                     <span><span data-i18n="lblFreq">Tần suất lên đơn</span>: <b id="val-freq-f4" style="color:var(--accent-success)">0</b></span> 
@@ -206,7 +206,7 @@
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="label" data-i18n="kpiDropF2Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (F2)</div>
+                <div class="label" data-i18n="kpiDropF2Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F2)</div>
                 <div class="value" id="val-drop-f2">0</div>
                 <div class="sub">
                     <span><span data-i18n="lblFreq">Tần suất lên đơn</span>: <b id="val-freq-f2" style="color:var(--accent-success)">0</b></span> 
@@ -225,12 +225,12 @@
                 <div class="sub" id="mom-headcount-dsr"></div>
             </div>
             <div class="kpi-card">
-                <div class="label" data-i18n="kpiAvgKaeLbl">NĂNG SUẤT BÌNH QUÂN/KAE</div>
+                <div class="label" data-i18n="kpiAvgKaeLbl">Doanh số bình quân mỗi KAE/ tháng</div>
                 <div class="value" id="val-avg-kae" style="color: var(--primary);">0</div>
                 <div class="sub" id="mom-avg-kae"></div>
             </div>
             <div class="kpi-card">
-                <div class="label" data-i18n="kpiAvgDsrLbl">NĂNG SUẤT BÌNH QUÂN/DSR</div>
+                <div class="label" data-i18n="kpiAvgDsrLbl">Doanh số bình quân mỗi DSR/ tháng</div>
                 <div class="value" id="val-avg-dsr" style="color: var(--primary);">0</div>
                 <div class="sub" id="mom-avg-dsr"></div>
             </div>
@@ -245,7 +245,7 @@
     <div class="chart-box">
         <div class="chart-header">
             <div class="chart-title" data-i18n="cAreaTitle">HIỆU QUẢ SELL-OUT THEO KHU VỰC</div>
-            <div class="chart-subtitle" data-i18n="cAreaSub">⚠️ Cảnh báo đỏ cho vùng có Tỷ lệ chốt đơn < 50% (Không bị ảnh hưởng bởi bộ lọc Khu vực)</div>
+            <div class="chart-subtitle" data-i18n="cAreaSub">⚠️ Cảnh báo đỏ vùng có Tỷ lệ chốt đơn < 50%</div>
         </div>
         <div style="height: 450px;"><canvas id="areaChart"></canvas></div>
         <div class="table-wrap"><table class="data-table"><thead id="areaHeaderRow"></thead><tbody id="areaTableBody"></tbody></table></div>
@@ -285,10 +285,6 @@
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="kamMap.js"></script>
-<script src="dataM5.js"></script>
-<script src="dataM6.js"></script>
-<script src="dataM7.js"></script>
 
 <script>
 Chart.defaults.color = '#A0AAB5';
@@ -300,13 +296,13 @@ const dict = {
         mainTitle: "RTM STRATEGIC DASHBOARD", subTitle: "Đánh giá Hiệu quả Phân phối, Thực thi Tuyến & Phân khúc Sức mua",
         lblMonth: "Tháng", lblWeek: "Tuần", lblRegion: "Miền", lblArea: "Khu vực", lblAll: "Tất cả",
         secPulse: "TỔNG QUAN CHUNG", kpiSalesLbl: "TỔNG SELL-OUT & KH LÊN ĐƠN", kpiSalesSub1: "VNĐ (Chưa VAT)", kpiSalesSub2: "Dòng tiền",
-        kpiStrikeLbl: "TỶ LỆ CHỐT ĐƠN (TRUE STRIKE RATE)", kpiStrikeSub: "Tỷ lệ chốt đơn",
-        kpiDropF4Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (F4)", kpiDropF2Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (F2)",
+        kpiStrikeLbl: "TỶ LỆ CHỐT ĐƠN", kpiStrikeSub: "Độ bao phủ",
+        kpiDropF4Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F4)", kpiDropF2Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F2)",
         treeTitle: "DANH MỤC NHÂN SỰ",
         lblFreq: "Tần suất lên đơn", lblLppc: "SKU TB/Đơn",
         kpiKaeLbl: "KAE ĐANG HOẠT ĐỘNG", kpiDsrLbl: "DSR ĐANG HOẠT ĐỘNG",
-        kpiAvgKaeLbl: "NĂNG SUẤT BÌNH QUÂN/KAE", kpiAvgDsrLbl: "NĂNG SUẤT BÌNH QUÂN/DSR",
-        secP1: "PHẦN 1: TỔNG QUAN THEO KHU VỰC", cAreaTitle: "HIỆU QUẢ SELL-OUT THEO KHU VỰC", cAreaSub: "⚠️ Cảnh báo đỏ cho vùng có Tỷ lệ chốt đơn < 50% (Không bị ảnh hưởng bởi bộ lọc Khu vực)",
+        kpiAvgKaeLbl: "Doanh số bình quân mỗi KAE/ tháng", kpiAvgDsrLbl: "Doanh số bình quân mỗi DSR/ tháng",
+        secP1: "PHẦN 1: TỔNG QUAN THEO KHU VỰC", cAreaTitle: "HIỆU QUẢ SELL-OUT THEO KHU VỰC", cAreaSub: "⚠️ Cảnh báo vùng có Tỷ lệ chốt đơn < 50%",
         cWeekTitle: "SELL OUT THEO TUẦN", secP2: "PHẦN 2: THỰC THI TẠI THỊ TRƯỜNG",
         cKamTitle: "TOP 10 KAM CÓ SELL OUT TỐT NHẤT", cKaeTitle: "TOP 10 KAE CÓ PERFORMANCE TỐT NHẤT",
         secP3: "PHẦN 3: ĐỘ PHỦ & CHIẾN LƯỢC ĐIỂM BÁN", cSegTitle: "PHÂN TÍCH SỨC MUA THEO PHÂN KHÚC TẠP HÓA",
@@ -321,13 +317,13 @@ const dict = {
         mainTitle: "RTM STRATEGIC DASHBOARD", subTitle: "Distribution Efficiency, Route Execution & Purchasing Power",
         lblMonth: "Month", lblWeek: "Week", lblRegion: "Region", lblArea: "Area", lblAll: "All",
         secPulse: "THE PULSE", kpiSalesLbl: "TOTAL SELL-OUT & ACTIVE OUTLETS", kpiSalesSub1: "VND (Excl. VAT)", kpiSalesSub2: "Volume Flow",
-        kpiStrikeLbl: "TRUE STRIKE RATE", kpiStrikeSub: "Strike rate",
+        kpiStrikeLbl: "Invoicing STRIKE RATE", kpiStrikeSub: "Coverage Strike rate",
         kpiDropF4Lbl: "AVERAGE VALUE / INVOICE (F4)", kpiDropF2Lbl: "AVERAGE VALUE / INVOICE (F2)", 
         treeTitle: "HEADCOUNT",
         lblFreq: "Freq", lblLppc: "LPPC",
         kpiKaeLbl: "ACTIVE KAE", kpiDsrLbl: "ACTIVE DSR",
-        kpiAvgKaeLbl: "AVG SALES / KAE", kpiAvgDsrLbl: "AVG SALES / DSR",
-        secP1: "PART 1: MACRO OVERVIEW (NATIONWIDE)", cAreaTitle: "SELL-OUT EFFICIENCY BY AREA", cAreaSub: "⚠️ Red flag for regions with Strike Rate < 50% (Unaffected by Area filter)",
+        kpiAvgKaeLbl: "AVG KAE PEFORMANCE/MONTH", kpiAvgDsrLbl: "AVG DSR PEFORMANCE/MONTH",
+        secP1: "PART 1: MACRO OVERVIEW (NATIONWIDE)", cAreaTitle: "SELL-OUT EFFICIENCY BY AREA", cAreaSub: "⚠️ Red flag for regions with Strike Rate < 50%",
         cWeekTitle: "WEEKLY SELL-OUT", secP2: "PART 2: IN-MARKET EXECUTION",
         cKamTitle: "TOP 10 KAM BY SELL-OUT", cKaeTitle: "TOP 10 KAE BY PERFORMANCE",
         secP3: "PART 3: COVERAGE & OUTLET STRATEGY", cSegTitle: "PURCHASING POWER BY OUTLET SEGMENTATION",
@@ -456,7 +452,7 @@ function render() {
     let snapF2 = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0 };
 
     let areaMapP1 = {}, weekMapP1 = {}; 
-    let kamMap = {}, kaeMap = {}, treeMap = {}, segMap = {}; 
+    let kamMapData = {}, kaeMap = {}, treeMap = {}, segMap = {}; 
     
     let kaeActive = new Set(), dsrActive = new Set();
     let kaeSales = 0, dsrSales = 0;
@@ -487,9 +483,9 @@ function render() {
 
             const kam = d._kam;
             if (kam) {
-                if (!kamMap[kam]) kamMap[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
-                kamMap[kam].p.add(d.cusCode);
-                kamMap[kam].areas.add(d.area);
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                kamMapData[kam].p.add(d.cusCode);
+                kamMapData[kam].areas.add(d.area);
             }
 
             const kae = d._kae;
@@ -555,10 +551,10 @@ function render() {
 
             const kam = d._kam;
             if (kam) {
-                if (!kamMap[kam]) kamMap[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
-                kamMap[kam].s += v;
-                kamMap[kam].areas.add(d.area);
-                if (v > 0) { kamMap[kam].a.add(d.cusCode); kamMap[kam].skus += skus; kamMap[kam].invs++; }
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                kamMapData[kam].s += v;
+                kamMapData[kam].areas.add(d.area);
+                if (v > 0) { kamMapData[kam].a.add(d.cusCode); kamMapData[kam].skus += skus; kamMapData[kam].invs++; }
             }
 
             const kae = d._kae;
@@ -719,9 +715,9 @@ function render() {
     drawHorizontalTable('weekHeaderRow', 'weekTableBody', weekData, t('colWeek'), true, { label: t('sysTotal'), ...sysKpiObjWeek }, false, true); 
 
     // 5. CHARTS P2 
-    let kamData = Object.keys(kamMap).map(k => ({
-        label: k, areaStr: Array.from(kamMap[k].areas).join(', '),
-        tc: kamMap[k].p.size, ac: kamMap[k].a.size, s: kamMap[k].s, avgSku: kamMap[k].invs > 0 ? kamMap[k].skus/kamMap[k].invs : 0, freq: kamMap[k].a.size > 0 ? kamMap[k].invs/kamMap[k].a.size : 0, invs: kamMap[k].invs
+    let kamData = Object.keys(kamMapData).map(k => ({
+        label: k, areaStr: Array.from(kamMapData[k].areas).join(', '),
+        tc: kamMapData[k].p.size, ac: kamMapData[k].a.size, s: kamMapData[k].s, avgSku: kamMapData[k].invs > 0 ? kamMapData[k].skus/kamMapData[k].invs : 0, freq: kamMapData[k].a.size > 0 ? kamMapData[k].invs/kamMapData[k].a.size : 0, invs: kamMapData[k].invs
     })).sort((a,b) => b.s - a.s).slice(0, 10);
     drawChart('kamChart', kamData, 'label', true); 
     drawVerticalTable('kamHeaderRow', 'kamTableBody', kamData, t('colKam'), false, null, false, false, true); 
@@ -933,7 +929,6 @@ function drawChart(id, data, labelKey, isHorizontal) {
     });
 }
 
-// ======================== PHẦN KHỞI TẠO HỆ THỐNG ========================
 function init() {
     dbMaster = []; dbSales = [];
     if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
@@ -975,7 +970,56 @@ function init() {
     setLang('vi');
     setTimeout(() => { document.getElementById('loader-wrapper').classList.add('hidden'); }, 300);
 }
-window.onload = init;
+</script>
+
+<script>
+    // Hàm xử lý lỗi khi không tải được file
+    function handleFatalError(source) {
+        var loaderText = document.querySelector('.loader-text'); // Đã điều chỉnh cho khớp class HTML
+        var spinner = document.querySelector('.spinner-container'); // Đã điều chỉnh cho khớp class HTML
+        
+        if(spinner) spinner.style.display = 'none';
+        if(loaderText) {
+            loaderText.innerHTML = '<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ LỖI KẾT NỐI DỮ LIỆU<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">Không thể tải file: <b>' + source + '</b><br>Vui lòng kiểm tra lại đường truyền, hoặc Bucket chưa bật Public.</span></span>';
+        }
+    }
+
+    // Tải động TOÀN BỘ các file với cơ chế chống cache (Version)
+    var version = '?t=' + new Date().getTime();
+    var baseUrl = "https://mrqldgycwovpbmzdeuyz.supabase.co/storage/v1/object/public/data/";
+    
+    // kamMap.js không dùng baseUrl vì nằm ở local repo
+    var scriptsToLoad = [
+        'kamMap.js' + version,
+        baseUrl + 'dataM5.js' + version,
+        baseUrl + 'dataM6.js' + version,
+        baseUrl + 'dataM7.js' + version
+    ];
+    
+    var loadedScripts = 0;
+    var hasError = false;
+
+    // Vòng lặp tải file an toàn
+    scriptsToLoad.forEach(function(src) {
+        var script = document.createElement('script');
+        script.src = src;
+        
+        script.onload = function() {
+            if (hasError) return;
+            loadedScripts++;
+            // Chỉ khi TẤT CẢ các file tải xong thì mới vẽ Dashboard
+            if (loadedScripts === scriptsToLoad.length) {
+                if (typeof init === 'function') init();
+            }
+        };
+        
+        script.onerror = function() {
+            hasError = true;
+            handleFatalError(src.split('?')[0]); // Báo lỗi tên file bị hỏng
+        };
+        
+        document.body.appendChild(script);
+    });
 </script>
 </body>
 </html>
