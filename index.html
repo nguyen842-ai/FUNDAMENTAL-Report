@@ -947,6 +947,16 @@ function init() {
     const pre = (arr) => arr.forEach(d => {
         d.month = d.month ? String(d.month).trim() : "";
         d._w = getW(d);
+
+        // --- BẮT ĐẦU ĐOẠN THÊM MỚI: GỘP W5 JUN & W0 JUL ---
+        let mCheck = d.month.toLowerCase();
+        let wCheck = d._w.toUpperCase();
+        if ((mCheck === 'jul' && wCheck === 'W0') || (mCheck === 'jun' && wCheck === 'W5')) {
+            d.month = 'Jun'; // Ép dữ liệu W0 tháng 7 về chung tháng 6 để không bị nhiễu bộ lọc
+            d._w = 'W5-W0';  // Tên cột trên biểu đồ sẽ tự động ghép thành "W5-W0 T6"
+        }
+        // --- KẾT THÚC ĐOẠN THÊM MỚI ---
+
         d.hq = d.hq ? String(d.hq).trim() : "";
         d.area = d.area ? String(d.area).trim() : "Unknown Area";
         
