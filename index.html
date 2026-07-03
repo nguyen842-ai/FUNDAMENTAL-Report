@@ -245,7 +245,7 @@
     <div class="chart-box">
         <div class="chart-header">
             <div class="chart-title" data-i18n="cAreaTitle">HIỆU QUẢ SELL-OUT THEO KHU VỰC</div>
-            <div class="chart-subtitle" data-i18n="cAreaSub">⚠️ Cảnh báo đỏ vùng có Tỷ lệ chốt đơn < 50%</div>
+            <div class="chart-subtitle" data-i18n="cAreaSub">⚠️ Cảnh báo vùng có Tỷ lệ khách hàng lên đơn dưới 50%</div>
         </div>
         <div style="height: 450px;"><canvas id="areaChart"></canvas></div>
         <div class="table-wrap"><table class="data-table"><thead id="areaHeaderRow"></thead><tbody id="areaTableBody"></tbody></table></div>
@@ -302,7 +302,7 @@ const dict = {
         lblFreq: "Tần suất lên đơn", lblLppc: "SKU TB/Đơn",
         kpiKaeLbl: "KAE ĐANG HOẠT ĐỘNG", kpiDsrLbl: "DSR ĐANG HOẠT ĐỘNG",
         kpiAvgKaeLbl: "Doanh số bình quân mỗi KAE/ tháng", kpiAvgDsrLbl: "Doanh số bình quân mỗi DSR/ tháng",
-        secP1: "PHẦN 1: TỔNG QUAN THEO KHU VỰC", cAreaTitle: "HIỆU QUẢ SELL-OUT THEO KHU VỰC", cAreaSub: "⚠️ Cảnh báo vùng có Tỷ lệ chốt đơn < 50%",
+        secP1: "PHẦN 1: TỔNG QUAN THEO KHU VỰC", cAreaTitle: "HIỆU QUẢ SELL-OUT THEO KHU VỰC", cAreaSub: "⚠️ Cảnh báo vùng có Tỷ lệ khách hàng lên đơn dưới 50%",
         cWeekTitle: "SELL OUT THEO TUẦN", secP2: "PHẦN 2: THỰC THI TẠI THỊ TRƯỜNG",
         cKamTitle: "TOP 10 KAM CÓ SELL OUT TỐT NHẤT", cKaeTitle: "TOP 10 KAE CÓ PERFORMANCE TỐT NHẤT",
         secP3: "PHẦN 3: ĐỘ PHỦ & CHIẾN LƯỢC ĐIỂM BÁN", cSegTitle: "PHÂN TÍCH SỨC MUA THEO PHÂN KHÚC TẠP HÓA",
@@ -323,7 +323,7 @@ const dict = {
         lblFreq: "Freq", lblLppc: "LPPC",
         kpiKaeLbl: "ACTIVE KAE", kpiDsrLbl: "ACTIVE DSR",
         kpiAvgKaeLbl: "AVG KAE PEFORMANCE/MONTH", kpiAvgDsrLbl: "AVG DSR PEFORMANCE/MONTH",
-        secP1: "PART 1: MACRO OVERVIEW (NATIONWIDE)", cAreaTitle: "SELL-OUT EFFICIENCY BY AREA", cAreaSub: "⚠️ Red flag for regions with Strike Rate < 50%",
+        secP1: "PART 1: MACRO OVERVIEW (NATIONWIDE)", cAreaTitle: "SELL-OUT EFFICIENCY BY AREA", cAreaSub: "⚠️ Red flag for regions with Coverage < 50%",
         cWeekTitle: "WEEKLY SELL-OUT", secP2: "PART 2: IN-MARKET EXECUTION",
         cKamTitle: "TOP 10 KAM BY SELL-OUT", cKaeTitle: "TOP 10 KAE BY PERFORMANCE",
         secP3: "PART 3: COVERAGE & OUTLET STRATEGY", cSegTitle: "PURCHASING POWER BY OUTLET SEGMENTATION",
@@ -472,8 +472,21 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
         }
 
         if(isMain) {
-            const wk = d._w + '|' + d.month;
-            if (!weekMapP1[wk]) weekMapP1[wk] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, w: d._w, m: d.month };
+            // --- XỬ LÝ GỘP TUẦN ĐẶC BIỆT CHO TUẦN VẮT NGANG THÁNG ---
+            let wk = d._w + '|' + d.month;
+            let isW27 = (d._wiso === 'W27');
+            if (isW27) {
+                wk = 'W27_MERGED'; // Dùng chung 1 key định danh duy nhất để gộp số liệu
+            }
+
+            if (!weekMapP1[wk]) {
+                weekMapP1[wk] = { 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, 
+                    w: isW27 ? 'W5' : d._w,     // Để nhãn 'W5' giúp thuật toán sắp xếp tự động đứng sau W4 Jun
+                    m: isW27 ? 'Jun' : d.month, // Định vị tạm thời ở Jun để biểu đồ sắp xếp liền mạch
+                    _isW27: isW27 
+                };
+            }
             weekMapP1[wk].p.add(d.cusCode);
 
             sys.p.add(d.cusCode);
@@ -540,8 +553,21 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
         }
 
         if(isMain) {
-            const wk = d._w + '|' + d.month;
-            if (!weekMapP1[wk]) weekMapP1[wk] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, w: d._w, m: d.month };
+            // --- XỬ LÝ GỘP TUẦN ĐẶC BIỆT CHO TUẦN VẮT NGANG THÁNG ---
+            let wk = d._w + '|' + d.month;
+            let isW27 = (d._wiso === 'W27');
+            if (isW27) {
+                wk = 'W27_MERGED';
+            }
+
+            if (!weekMapP1[wk]) {
+                weekMapP1[wk] = { 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, 
+                    w: isW27 ? 'W5' : d._w, 
+                    m: isW27 ? 'Jun' : d.month,
+                    _isW27: isW27 
+                };
+            }
             weekMapP1[wk].s += v;
             if (v > 0) { weekMapP1[wk].a.add(d.cusCode); weekMapP1[wk].skus += skus; weekMapP1[wk].invs++; }
 
@@ -707,7 +733,22 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
     drawChart('areaChart', areaData, 'label', false); 
     drawHorizontalTable('areaHeaderRow', 'areaTableBody', areaData, t('colArea'), true, { label: t('sysTotal'), ...p1Kpi }, true); 
 
-    let weekData = Object.keys(weekMapP1).map(k => ({ label: formatWM(weekMapP1[k].w, weekMapP1[k].m), tc: weekMapP1[k].p.size, ac: weekMapP1[k].a.size, s: weekMapP1[k].s, avgSku: weekMapP1[k].invs > 0 ? weekMapP1[k].skus/weekMapP1[k].invs : 0, freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invs/weekMapP1[k].a.size : 0, invs: weekMapP1[k].invs, w: weekMapP1[k].w, m: weekMapP1[k].m })).sort((a,b) => { let m1 = monthOrder[a.m.toLowerCase()]||99; let m2 = monthOrder[b.m.toLowerCase()]||99; return m1!==m2 ? m1-m2 : a.w.localeCompare(b.w); });
+    let weekData = Object.keys(weekMapP1).map(k => ({ 
+        label: weekMapP1[k]._isW27 ? (lang === 'vi' ? 'W5 T6+W0 T7' : 'W5 M6+W0 M7') : formatWM(weekMapP1[k].w, weekMapP1[k].m), 
+        tc: weekMapP1[k].p.size, 
+        ac: weekMapP1[k].a.size, 
+        s: weekMapP1[k].s, 
+        avgSku: weekMapP1[k].invs > 0 ? weekMapP1[k].skus/weekMapP1[k].invs : 0, 
+        freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invs/weekMapP1[k].a.size : 0, 
+        invs: weekMapP1[k].invs, 
+        w: weekMapP1[k].w, 
+        m: weekMapP1[k].m 
+    })).sort((a,b) => { 
+        let m1 = monthOrder[a.m.toLowerCase()]||99; 
+        let m2 = monthOrder[b.m.toLowerCase()]||99; 
+        return m1!==m2 ? m1-m2 : a.w.localeCompare(b.w); 
+    });
+    
     drawChart('weekChart', weekData, 'label', false); 
     
     let sysKpiObjWeek = { tc: sysTc, ac: sysAc, s: sys.s, avgSku: sys.invs > 0 ? sys.skus/sys.invs : 0, freq: sysAc > 0 ? sys.invs/sysAc : 0, invs: sys.invs };
@@ -947,16 +988,10 @@ function init() {
     const pre = (arr) => arr.forEach(d => {
         d.month = d.month ? String(d.month).trim() : "";
         d._w = getW(d);
-
-        // --- BẮT ĐẦU ĐOẠN THÊM MỚI: GỘP W5 JUN & W0 JUL ---
-        let mCheck = d.month.toLowerCase();
-        let wCheck = d._w.toUpperCase();
-        if ((mCheck === 'jul' && wCheck === 'W0') || (mCheck === 'jun' && wCheck === 'W5')) {
-            d.month = 'Jun'; // Ép dữ liệu W0 tháng 7 về chung tháng 6 để không bị nhiễu bộ lọc
-            d._w = 'W5-W0';  // Tên cột trên biểu đồ sẽ tự động ghép thành "W5-W0 T6"
-        }
-        // --- KẾT THÚC ĐOẠN THÊM MỚI ---
-
+        
+        // --- CHUẨN HÓA BIẾN WISO TỪ DỮ LIỆU CỦA BẠN ---
+        d._wiso = d.wiso ? String(d.wiso).trim().toUpperCase() : (d.Wiso ? String(d.Wiso).trim().toUpperCase() : "");
+        
         d.hq = d.hq ? String(d.hq).trim() : "";
         d.area = d.area ? String(d.area).trim() : "Unknown Area";
         
