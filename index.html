@@ -174,12 +174,11 @@
             </div>
         </div>
         
-        <div class="top-filters-hz">
-            <div class="filter-item-hz"><label data-i18n="lblMonth">Tháng</label><div class="ms-box" onclick="toggleMS('month')"><div class="ms-label" id="lbl-month">Tất cả</div><div class="ms-dropdown" id="drop-month"></div></div></div>
-            <div class="filter-item-hz"><label data-i18n="lblWeek">Tuần</label><div class="ms-box" onclick="toggleMS('week')"><div class="ms-label" id="lbl-week">Tất cả</div><div class="ms-dropdown" id="drop-week"></div></div></div>
-            <div class="filter-item-hz"><label data-i18n="lblRegion">Miền</label><div class="ms-box" onclick="toggleMS('hq')"><div class="ms-label" id="lbl-hq">Tất cả</div><div class="ms-dropdown" id="drop-hq"></div></div></div>
-            <div class="filter-item-hz"><label data-i18n="lblArea">Khu vực</label><div class="ms-box" onclick="toggleMS('area')"><div class="ms-label" id="lbl-area">Tất cả</div><div class="ms-dropdown" id="drop-area"></div></div></div>
-        </div>
+       <div class="top-filters-hz">
+    <div class="filter-item-hz"><label data-i18n="lblMonth">Tháng</label><div class="ms-box" onclick="toggleMS('month')"><div class="ms-label" id="lbl-month">Tất cả</div><div class="ms-dropdown" id="drop-month"></div></div></div>
+    <div class="filter-item-hz"><label data-i18n="lblRegion">Miền</label><div class="ms-box" onclick="toggleMS('hq')"><div class="ms-label" id="lbl-hq">Tất cả</div><div class="ms-dropdown" id="drop-hq"></div></div></div>
+    <div class="filter-item-hz"><label data-i18n="lblArea">Khu vực</label><div class="ms-box" onclick="toggleMS('area')"><div class="ms-label" id="lbl-area">Tất cả</div><div class="ms-dropdown" id="drop-area"></div></div></div>
+</div>
     </header>
 
     <div class="section-tag" data-i18n="secPulse">TỔNG QUAN CHUNG</div>
@@ -339,7 +338,7 @@ const dict = {
 const segNames = { 'A': 'Class A', 'B': 'Class B', 'C': 'Class C', 'D': 'Class D', 'N': 'Unclassified' };
 const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
 
-let lang = 'vi'; let filters = { month: [], week: [], hq: [], area: [] }; let charts = {}; let dbMaster = []; let dbSales = [];
+let lang = 'vi'; let filters = { month: [], hq: [], area: [] }; let charts = {}; let dbMaster = []; let dbSales = [];
 
 const t = (k) => dict[lang][k] || k;
 const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
@@ -403,7 +402,6 @@ function populateDropdown(id, type, optionsArr) {
 function renderFilters() {
     let all = [...dbMaster, ...dbSales];
     populateDropdown('month', 'month', [...new Set(all.map(d => d.month))].filter(Boolean).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99)));
-    populateDropdown('week', 'week', [...new Set(all.map(d => d._w))].filter(Boolean).sort());
     populateDropdown('hq', 'hq', [...new Set(all.map(d=>d.hq))].filter(Boolean).sort());
     populateDropdown('area', 'area', [...new Set(all.filter(d => filters.hq.length === 0 || filters.hq.includes(d.hq)).map(d=>d.area))].filter(Boolean).sort());
 }
@@ -424,7 +422,7 @@ function render() {
     let weekSubText = filters.area.length > 0 ? filters.area.join(', ') : (lang === 'vi' ? 'Tất cả khu vực' : 'All Areas');
     document.getElementById('weekChartSub').innerText = (lang === 'vi' ? 'Khu vực đang xem: ' : 'Filtered Areas: ') + weekSubText;
 
-    const filterP1 = (d) => (filters.month.length === 0 || filters.month.includes(d.month)) && (filters.week.length === 0 || filters.week.includes(d._w));
+    const filterP1 = (d) => (filters.month.length === 0 || filters.month.includes(d.month));
     const filterMain = (d) => filterP1(d) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
 
     let allMonths = new Set();
@@ -463,8 +461,8 @@ function render() {
         if(!d.cusCode) return;
         let isP1 = filterP1(d);
         let isMain = filterMain(d);
-        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.week.length === 0 || filters.week.includes(d._w)) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
-        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.week.length === 0 || filters.week.includes(d._w)) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+       let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
 
         if(isP1) {
             const a = d.area;
@@ -530,8 +528,8 @@ function render() {
         let isP1 = filterP1(d);
         let isMain = filterMain(d);
 
-        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.week.length === 0 || filters.week.includes(d._w)) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
-        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.week.length === 0 || filters.week.includes(d._w)) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
 
         if(isP1) {
             const a = d.area;
