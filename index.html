@@ -7,7 +7,10 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-     <link rel="icon" type="image/png" href="faviconTCI.png">
+    <link rel="icon" type="image/png" href="faviconTCI.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         /* =========================================================
            1. CẤU HÌNH DARK THEME PREMIUM (iOS STYLING & 5 COLORS)
@@ -472,18 +475,17 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
         }
 
         if(isMain) {
-            // --- XỬ LÝ GỘP TUẦN ĐẶC BIỆT CHO TUẦN VẮT NGANG THÁNG ---
             let wk = d._w + '|' + d.month;
             let isW27 = (d._wiso === 'W27');
             if (isW27) {
-                wk = 'W27_MERGED'; // Dùng chung 1 key định danh duy nhất để gộp số liệu
+                wk = 'W27_MERGED'; 
             }
 
             if (!weekMapP1[wk]) {
                 weekMapP1[wk] = { 
                     p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, 
-                    w: isW27 ? 'W5' : d._w,     // Để nhãn 'W5' giúp thuật toán sắp xếp tự động đứng sau W4 Jun
-                    m: isW27 ? 'Jun' : d.month, // Định vị tạm thời ở Jun để biểu đồ sắp xếp liền mạch
+                    w: isW27 ? 'W5' : d._w,     
+                    m: isW27 ? 'Jun' : d.month, 
                     _isW27: isW27 
                 };
             }
@@ -553,7 +555,6 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
         }
 
         if(isMain) {
-            // --- XỬ LÝ GỘP TUẦN ĐẶC BIỆT CHO TUẦN VẮT NGANG THÁNG ---
             let wk = d._w + '|' + d.month;
             let isW27 = (d._wiso === 'W27');
             if (isW27) {
@@ -644,7 +645,7 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
         }
     });
 
-    // 1. UPDATE 4 KPIs ĐẦU TIÊN
+    // 1. UPDATE KPIs
     let sysAc = sys.a.size; let sysTc = sys.p.size;
     
     document.getElementById("val-sales").innerText = fmt(sys.s);
@@ -655,17 +656,14 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
     document.getElementById("val-true-strike").innerText = trueStrike.toFixed(1) + "%";
     document.getElementById("val-penetration").innerText = penetration.toFixed(1) + "%";
 
-    // F4 Value/Invoice & Freq (Dựa trên Snapshot tháng mới nhất)
     document.getElementById("val-drop-f4").innerText = snapF4.invs > 0 ? fmt(snapF4.s / snapF4.invs) : 0;
     document.getElementById("val-freq-f4").innerText = snapF4.a.size > 0 ? (snapF4.invs / snapF4.a.size).toFixed(1) : "0.0";
     document.getElementById("val-lppc-f4").innerText = snapF4.invs > 0 ? (snapF4.skus / snapF4.invs).toFixed(1) : "0.0";
 
-    // F2 Value/Invoice & Freq (Dựa trên Snapshot tháng mới nhất)
     document.getElementById("val-drop-f2").innerText = snapF2.invs > 0 ? fmt(snapF2.s / snapF2.invs) : 0;
     document.getElementById("val-freq-f2").innerText = snapF2.a.size > 0 ? (snapF2.invs / snapF2.a.size).toFixed(1) : "0.0";
     document.getElementById("val-lppc-f2").innerText = snapF2.invs > 0 ? (snapF2.skus / snapF2.invs).toFixed(1) : "0.0";
 
-    // 2. CẬP NHẬT 4 KPI NHÂN SỰ VÀ MOM
     document.getElementById("val-headcount-kae").innerText = fmt(kaeActive.size);
     document.getElementById("val-headcount-dsr").innerText = fmt(dsrActive.size);
     
@@ -989,7 +987,6 @@ function init() {
         d.month = d.month ? String(d.month).trim() : "";
         d._w = getW(d);
         
-        // --- CHUẨN HÓA BIẾN WISO TỪ DỮ LIỆU CỦA BẠN ---
         d._wiso = d.wiso ? String(d.wiso).trim().toUpperCase() : (d.Wiso ? String(d.Wiso).trim().toUpperCase() : "");
         
         d.hq = d.hq ? String(d.hq).trim() : "";
@@ -1017,53 +1014,84 @@ function init() {
 </script>
 
 <script>
+(async function () {
     // Hàm xử lý lỗi khi không tải được file
     function handleFatalError(source) {
-        var loaderText = document.querySelector('.loader-text'); // Đã điều chỉnh cho khớp class HTML
-        var spinner = document.querySelector('.spinner-container'); // Đã điều chỉnh cho khớp class HTML
+        var loaderText = document.querySelector('.loader-text');
+        var spinner = document.querySelector('.spinner-container');
         
         if(spinner) spinner.style.display = 'none';
         if(loaderText) {
-            loaderText.innerHTML = '<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ LỖI KẾT NỐI DỮ LIỆU<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">Không thể tải file: <b>' + source + '</b><br>Vui lòng kiểm tra lại đường truyền, hoặc Bucket chưa bật Public.</span></span>';
+            loaderText.innerHTML = '<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ LỖI BẢO MẬT HOẶC KẾT NỐI<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">Không có quyền truy cập: <b>' + source + '</b><br>Vui lòng quay lại Trang Hub để đăng nhập!</span></span>';
         }
     }
 
-    // Tải động TOÀN BỘ các file với cơ chế chống cache (Version)
-    var version = '?t=' + new Date().getTime();
-    var baseUrl = "https://mrqldgycwovpbmzdeuyz.supabase.co/storage/v1/object/public/data/";
-    
-    // kamMap.js không dùng baseUrl vì nằm ở local repo
-    var scriptsToLoad = [
-        'kamMap.js' + version,
-        baseUrl + 'dataM5.js' + version,
-        baseUrl + 'dataM6.js' + version,
-        baseUrl + 'dataM7.js' + version
-    ];
-    
-    var loadedScripts = 0;
-    var hasError = false;
+    // Kết nối Supabase
+    const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Vòng lặp tải file an toàn
-    scriptsToLoad.forEach(function(src) {
-        var script = document.createElement('script');
-        script.src = src;
-        
-        script.onload = function() {
-            if (hasError) return;
-            loadedScripts++;
-            // Chỉ khi TẤT CẢ các file tải xong thì mới vẽ Dashboard
-            if (loadedScripts === scriptsToLoad.length) {
-                if (typeof init === 'function') init();
-            }
-        };
-        
-        script.onerror = function() {
-            hasError = true;
-            handleFatalError(src.split('?')[0]); // Báo lỗi tên file bị hỏng
-        };
-        
-        document.body.appendChild(script);
-    });
+    // CẤU HÌNH THÔNG TIN BÁO CÁO
+    const BUCKET_NAME = 'data';
+    // 🛑 THAY LINK TRANG HUB CỦA BẠN VÀO ĐÂY:
+    const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
+
+    // Kiểm tra Session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        alert("Phiên làm việc hết hạn hoặc chưa đăng nhập. Đang chuyển về Trang Hub...");
+        window.location.href = HUB_URL;
+        return; 
+    }
+
+    // Danh sách File cần tải
+    var version = '?t=' + new Date().getTime();
+    var localScripts = ['kamMap.js' + version]; 
+    var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js']; 
+
+    try {
+        // Xin quyền đọc hàng loạt file trong bucket Data
+        const { data: signedUrlsData, error } = await supabase.storage
+            .from(BUCKET_NAME)
+            .createSignedUrls(secureDataFiles, 60); // Link sống 60 giây
+
+        if (error || !signedUrlsData) throw error;
+
+        var scriptsToLoad = [...localScripts];
+        signedUrlsData.forEach(item => {
+            if (item.error) throw new Error("Không có quyền đọc file: " + item.path);
+            scriptsToLoad.push(item.signedUrl); 
+        });
+
+        // Chạy vòng lặp tải file an toàn
+        var loadedScripts = 0;
+        var hasError = false;
+
+        scriptsToLoad.forEach(function(src) {
+            var script = document.createElement('script');
+            script.src = src;
+            
+            script.onload = function() {
+                if (hasError) return;
+                loadedScripts++;
+                if (loadedScripts === scriptsToLoad.length) {
+                    if (typeof init === 'function') init();
+                }
+            };
+            
+            script.onerror = function() {
+                hasError = true;
+                handleFatalError(src.split('?')[0].substring(0, 60) + '...'); 
+            };
+            
+            document.body.appendChild(script);
+        });
+
+    } catch (err) {
+        console.error("Lỗi xác thực:", err);
+        handleFatalError("Dữ liệu bảo mật (Access Denied)");
+    }
+})();
 </script>
 </body>
 </html>
