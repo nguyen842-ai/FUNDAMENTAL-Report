@@ -490,12 +490,31 @@ function render() {
     let kaeActivePrev = new Set(), dsrActivePrev = new Set();
     let kaeSalesPrev = 0, dsrSalesPrev = 0;
 
+    // ================= LOGIC SNAPSHOT NHÂN SỰ =================
+    let pMonths = filters.month.map(m => m.toLowerCase());
+    if (pMonths.length === 0 && sortedAvailable.length > 0) {
+        pMonths = [sortedAvailable[sortedAvailable.length - 1]]; // Lấy tháng cuối cùng
+    }
+    let activeKamTree = new Set();
+    let activeKaeTree = new Set();
+    // ==========================================================
+
     dbMaster.forEach(d => {
         if(!d.cusCode) return;
+
+        // Quét nhân sự cho Snapshot
+        let isPersonnelTarget = pMonths.includes(d.month.toLowerCase()) && 
+                                (filters.hq.length === 0 || filters.hq.includes(d.hq)) && 
+                                (filters.area.length === 0 || filters.area.includes(d.area));
+        if (isPersonnelTarget) {
+            if (d._kam) activeKamTree.add(d._kam);
+            if (d._kam && d._kae) activeKaeTree.add(d._kam + '|' + d._kae);
+        }
+
         let isP1 = filterP1(d);
         let isMain = filterMain(d);
-       let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
-let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
 
         if(isP1) {
             const a = d.area;
@@ -570,11 +589,21 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
     dbSales.forEach(d => {
         const v = d.sales || 0;
         const skus = d.skuLines || 0;
+        
+        // Quét nhân sự cho Snapshot
+        let isPersonnelTarget = pMonths.includes(d.month.toLowerCase()) && 
+                                (filters.hq.length === 0 || filters.hq.includes(d.hq)) && 
+                                (filters.area.length === 0 || filters.area.includes(d.area));
+        if (isPersonnelTarget) {
+            if (d._kam) activeKamTree.add(d._kam);
+            if (d._kam && d._kae) activeKaeTree.add(d._kam + '|' + d._kae);
+        }
+
         let isP1 = filterP1(d);
         let isMain = filterMain(d);
 
         let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
-let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
 
         if(isP1) {
             const a = d.area;
@@ -733,13 +762,20 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
     </div>`;
 
     Object.keys(treeMap).sort((a,b) => treeMap[b].s - treeMap[a].s).forEach(k => {
+        // CHỐT CHẶN: Chỉ hiển thị KAM nếu có trong tháng Snapshot
+        if (!activeKamTree.has(k)) return;
+        
+        // CHỐT CHẶN: Chỉ lấy các KAE có hoạt động trong tháng Snapshot
+        let kaeKeys = Object.keys(treeMap[k].kaes).filter(ke => activeKaeTree.has(k + '|' + ke));
+        if (kaeKeys.length === 0) return; // Nếu KAM không có lính nào active, ẩn luôn KAM
+
         let kamMonthHtml = sortedMonths.map(m => `<span style="color:var(--primary); font-weight:bold;">${fmt(treeMap[k].sByM[m] || 0)}</span>`).join('');
         treeHtml += `<details class="tree-node"><summary style="display:grid; ${gridStyle}">
             <div class="t-name">${treeMap[k].display}</div>
             ${kamMonthHtml}
         </summary><div class="t-children">`;
         
-        Object.keys(treeMap[k].kaes).sort((a,b) => treeMap[k].kaes[b].s - treeMap[k].kaes[a].s).forEach(ke => {
+        kaeKeys.sort((a,b) => treeMap[k].kaes[b].s - treeMap[k].kaes[a].s).forEach(ke => {
             let kaeMonthHtml = sortedMonths.map(m => `<span>${fmt(treeMap[k].kaes[ke].sByM[m] || 0)}</span>`).join('');
             treeHtml += `<div class="t-leaf" style="display:grid; ${gridStyle}">
                 <div class="t-name leaf-name">${treeMap[k].kaes[ke].display}</div>
@@ -773,7 +809,10 @@ let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (fi
     })).sort((a,b) => { 
         let m1 = monthOrder[a.m.toLowerCase()]||99; 
         let m2 = monthOrder[b.m.toLowerCase()]||99; 
-        return m1!==m2 ? m1-m2 : a.w.localeCompare(b.w); 
+        // Bóc tách lấy phần số của Tuần (VD: 'W5' -> 5) để so sánh chuẩn xác
+        let w1 = parseInt(a.w.replace(/\D/g, '')) || 0;
+        let w2 = parseInt(b.w.replace(/\D/g, '')) || 0;
+        return m1 !== m2 ? m1 - m2 : w1 - w2; 
     });
     
     drawChart('weekChart', weekData, 'label', false); 
