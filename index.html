@@ -477,10 +477,11 @@ function render() {
 
     let activeMonths = new Set(); 
 
-    let sys = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, plannedVisits: 0 };
+    // CHÚ Ý SỬA LỖI INVOICE Ở ĐÂY: Thay vì invs là số (0), sử dụng invSet để loại trừ trùng lặp hoá đơn khi xé nhỏ Category
+    let sys = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), plannedVisits: 0 };
     
-    let snapF4 = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0 };
-    let snapF2 = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0 };
+    let snapF4 = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
+    let snapF2 = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
 
     let areaMapP1 = {}, weekMapP1 = {}; 
     let kamMapData = {}, kaeMap = {}, treeMap = {}, segMap = {}; 
@@ -518,7 +519,7 @@ function render() {
 
         if(isP1) {
             const a = d.area;
-            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0 };
+            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
             areaMapP1[a].p.add(d.cusCode);
         }
 
@@ -531,7 +532,7 @@ function render() {
 
             if (!weekMapP1[wk]) {
                 weekMapP1[wk] = { 
-                    p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
                     w: isW27 ? 'W5' : d._w,     
                     m: isW27 ? 'Jun' : d.month, 
                     _isW27: isW27 
@@ -545,14 +546,14 @@ function render() {
 
             const kam = d._kam;
             if (kam) {
-                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
                 kamMapData[kam].p.add(d.cusCode);
                 kamMapData[kam].areas.add(d.area);
             }
 
             const kae = d._kae;
             if (kae && !kae.toUpperCase().startsWith('KAM')) {
-                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
                 kaeMap[kae].p.add(d.cusCode);
                 kaeMap[kae].areas.add(d.area);
             }
@@ -590,6 +591,9 @@ function render() {
         const v = d.sales || 0;
         const skus = d.skuLines || 0;
         
+        // Tạo unique Invoice ID: dùng ID gốc nếu có, nếu không thì tự ghép (Khách hàng + Tháng + Tuần + Ngày)
+        const invId = d.invoiceId || d.invId || d.orderId || d.billId || d.InvId || d.InvoiceId || (d.cusCode + '|' + d.month + '|' + d._w + (d.date ? '|' + d.date : ''));
+        
         // Quét nhân sự cho Snapshot
         let isPersonnelTarget = pMonths.includes(d.month.toLowerCase()) && 
                                 (filters.hq.length === 0 || filters.hq.includes(d.hq)) && 
@@ -607,9 +611,9 @@ function render() {
 
         if(isP1) {
             const a = d.area;
-            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0 };
+            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
             areaMapP1[a].s += v;
-            if (v > 0) { areaMapP1[a].a.add(d.cusCode); areaMapP1[a].skus += skus; areaMapP1[a].invs++; }
+            if (v > 0) { areaMapP1[a].a.add(d.cusCode); areaMapP1[a].skus += skus; areaMapP1[a].invSet.add(invId); }
         }
 
         if(isMain) {
@@ -621,32 +625,32 @@ function render() {
 
             if (!weekMapP1[wk]) {
                 weekMapP1[wk] = { 
-                    p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
                     w: isW27 ? 'W5' : d._w, 
                     m: isW27 ? 'Jun' : d.month,
                     _isW27: isW27 
                 };
             }
             weekMapP1[wk].s += v;
-            if (v > 0) { weekMapP1[wk].a.add(d.cusCode); weekMapP1[wk].skus += skus; weekMapP1[wk].invs++; }
+            if (v > 0) { weekMapP1[wk].a.add(d.cusCode); weekMapP1[wk].skus += skus; weekMapP1[wk].invSet.add(invId); }
 
             sys.s += v;
-            if (v > 0) { sys.a.add(d.cusCode); sys.skus += skus; sys.invs++; }
+            if (v > 0) { sys.a.add(d.cusCode); sys.skus += skus; sys.invSet.add(invId); }
 
             const kam = d._kam;
             if (kam) {
-                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
                 kamMapData[kam].s += v;
                 kamMapData[kam].areas.add(d.area);
-                if (v > 0) { kamMapData[kam].a.add(d.cusCode); kamMapData[kam].skus += skus; kamMapData[kam].invs++; }
+                if (v > 0) { kamMapData[kam].a.add(d.cusCode); kamMapData[kam].skus += skus; kamMapData[kam].invSet.add(invId); }
             }
 
             const kae = d._kae;
             if (kae && !kae.toUpperCase().startsWith('KAM')) {
-                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invs: 0, areas: new Set() };
+                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
                 kaeMap[kae].s += v;
                 kaeMap[kae].areas.add(d.area);
-                if (v > 0) { kaeMap[kae].a.add(d.cusCode); kaeMap[kae].skus += skus; kaeMap[kae].invs++; }
+                if (v > 0) { kaeMap[kae].a.add(d.cusCode); kaeMap[kae].skus += skus; kaeMap[kae].invSet.add(invId); }
             }
 
             if (kam && kae) {
@@ -680,11 +684,11 @@ function render() {
             const rt = d._rtMap[d.cusCode] || "UNKNOWN";
             if (rt === 'F4') {
                 snapF4.s += v;
-                if (v > 0) { snapF4.a.add(d.cusCode); snapF4.skus += skus; snapF4.invs++; }
+                if (v > 0) { snapF4.a.add(d.cusCode); snapF4.skus += skus; snapF4.invSet.add(invId); }
             }
             if (rt === 'F2') {
                 snapF2.s += v;
-                if (v > 0) { snapF2.a.add(d.cusCode); snapF2.skus += skus; snapF2.invs++; }
+                if (v > 0) { snapF2.a.add(d.cusCode); snapF2.skus += skus; snapF2.invSet.add(invId); }
             }
 
             const kae = d._kae;
@@ -709,18 +713,18 @@ function render() {
     document.getElementById("val-sales").innerText = fmt(sys.s);
     document.getElementById("val-active-cust").innerText = fmt(sysAc);
 
-    let trueStrike = sys.plannedVisits > 0 ? (sys.invs / sys.plannedVisits * 100) : 0;
+    let trueStrike = sys.plannedVisits > 0 ? (sys.invSet.size / sys.plannedVisits * 100) : 0;
     let penetration = sysTc > 0 ? (sysAc / sysTc * 100) : 0;
     document.getElementById("val-true-strike").innerText = trueStrike.toFixed(1) + "%";
     document.getElementById("val-penetration").innerText = penetration.toFixed(1) + "%";
 
-    document.getElementById("val-drop-f4").innerText = snapF4.invs > 0 ? fmt(snapF4.s / snapF4.invs) : 0;
-    document.getElementById("val-freq-f4").innerText = snapF4.a.size > 0 ? (snapF4.invs / snapF4.a.size).toFixed(1) : "0.0";
-    document.getElementById("val-lppc-f4").innerText = snapF4.invs > 0 ? (snapF4.skus / snapF4.invs).toFixed(1) : "0.0";
+    document.getElementById("val-drop-f4").innerText = snapF4.invSet.size > 0 ? fmt(snapF4.s / snapF4.invSet.size) : 0;
+    document.getElementById("val-freq-f4").innerText = snapF4.a.size > 0 ? (snapF4.invSet.size / snapF4.a.size).toFixed(1) : "0.0";
+    document.getElementById("val-lppc-f4").innerText = snapF4.invSet.size > 0 ? (snapF4.skus / snapF4.invSet.size).toFixed(1) : "0.0";
 
-    document.getElementById("val-drop-f2").innerText = snapF2.invs > 0 ? fmt(snapF2.s / snapF2.invs) : 0;
-    document.getElementById("val-freq-f2").innerText = snapF2.a.size > 0 ? (snapF2.invs / snapF2.a.size).toFixed(1) : "0.0";
-    document.getElementById("val-lppc-f2").innerText = snapF2.invs > 0 ? (snapF2.skus / snapF2.invs).toFixed(1) : "0.0";
+    document.getElementById("val-drop-f2").innerText = snapF2.invSet.size > 0 ? fmt(snapF2.s / snapF2.invSet.size) : 0;
+    document.getElementById("val-freq-f2").innerText = snapF2.a.size > 0 ? (snapF2.invSet.size / snapF2.a.size).toFixed(1) : "0.0";
+    document.getElementById("val-lppc-f2").innerText = snapF2.invSet.size > 0 ? (snapF2.skus / snapF2.invSet.size).toFixed(1) : "0.0";
 
     document.getElementById("val-headcount-kae").innerText = fmt(kaeActive.size);
     document.getElementById("val-headcount-dsr").innerText = fmt(dsrActive.size);
@@ -789,10 +793,10 @@ function render() {
 
     // 4. CHARTS P1 
     let p1Total = { tc: 0, ac: 0, s: 0, skus: 0, invs: 0 };
-    Object.values(areaMapP1).forEach(m => { p1Total.tc+=m.p.size; p1Total.ac+=m.a.size; p1Total.s+=m.s; p1Total.skus+=m.skus; p1Total.invs+=m.invs; });
+    Object.values(areaMapP1).forEach(m => { p1Total.tc+=m.p.size; p1Total.ac+=m.a.size; p1Total.s+=m.s; p1Total.skus+=m.skus; p1Total.invs+=m.invSet.size; });
     let p1Kpi = { tc: p1Total.tc, ac: p1Total.ac, s: p1Total.s, avgSku: p1Total.invs > 0 ? p1Total.skus/p1Total.invs : 0, freq: p1Total.ac > 0 ? p1Total.invs/p1Total.ac : 0, invs: p1Total.invs };
 
-    let areaData = Object.keys(areaMapP1).map(k => ({ label: k, tc: areaMapP1[k].p.size, ac: areaMapP1[k].a.size, s: areaMapP1[k].s, avgSku: areaMapP1[k].invs > 0 ? areaMapP1[k].skus/areaMapP1[k].invs : 0, freq: areaMapP1[k].a.size > 0 ? areaMapP1[k].invs/areaMapP1[k].a.size : 0, invs: areaMapP1[k].invs })).sort((a,b) => b.s - a.s);
+    let areaData = Object.keys(areaMapP1).map(k => ({ label: k, tc: areaMapP1[k].p.size, ac: areaMapP1[k].a.size, s: areaMapP1[k].s, avgSku: areaMapP1[k].invSet.size > 0 ? areaMapP1[k].skus/areaMapP1[k].invSet.size : 0, freq: areaMapP1[k].a.size > 0 ? areaMapP1[k].invSet.size/areaMapP1[k].a.size : 0, invs: areaMapP1[k].invSet.size })).sort((a,b) => b.s - a.s);
     drawChart('areaChart', areaData, 'label', false); 
     drawHorizontalTable('areaHeaderRow', 'areaTableBody', areaData, t('colArea'), true, { label: t('sysTotal'), ...p1Kpi }, true); 
 
@@ -801,9 +805,9 @@ function render() {
         tc: weekMapP1[k].p.size, 
         ac: weekMapP1[k].a.size, 
         s: weekMapP1[k].s, 
-        avgSku: weekMapP1[k].invs > 0 ? weekMapP1[k].skus/weekMapP1[k].invs : 0, 
-        freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invs/weekMapP1[k].a.size : 0, 
-        invs: weekMapP1[k].invs, 
+        avgSku: weekMapP1[k].invSet.size > 0 ? weekMapP1[k].skus/weekMapP1[k].invSet.size : 0, 
+        freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invSet.size/weekMapP1[k].a.size : 0, 
+        invs: weekMapP1[k].invSet.size, 
         w: weekMapP1[k].w, 
         m: weekMapP1[k].m 
     })).sort((a,b) => { 
@@ -817,13 +821,13 @@ function render() {
     
     drawChart('weekChart', weekData, 'label', false); 
     
-    let sysKpiObjWeek = { tc: sysTc, ac: sysAc, s: sys.s, avgSku: sys.invs > 0 ? sys.skus/sys.invs : 0, freq: sysAc > 0 ? sys.invs/sysAc : 0, invs: sys.invs };
+    let sysKpiObjWeek = { tc: sysTc, ac: sysAc, s: sys.s, avgSku: sys.invSet.size > 0 ? sys.skus/sys.invSet.size : 0, freq: sysAc > 0 ? sys.invSet.size/sysAc : 0, invs: sys.invSet.size };
     drawHorizontalTable('weekHeaderRow', 'weekTableBody', weekData, t('colWeek'), true, { label: t('sysTotal'), ...sysKpiObjWeek }, false, true); 
 
     // 5. CHARTS P2 
     let kamData = Object.keys(kamMapData).map(k => ({
         label: k, areaStr: Array.from(kamMapData[k].areas).join(', '),
-        tc: kamMapData[k].p.size, ac: kamMapData[k].a.size, s: kamMapData[k].s, avgSku: kamMapData[k].invs > 0 ? kamMapData[k].skus/kamMapData[k].invs : 0, freq: kamMapData[k].a.size > 0 ? kamMapData[k].invs/kamMapData[k].a.size : 0, invs: kamMapData[k].invs
+        tc: kamMapData[k].p.size, ac: kamMapData[k].a.size, s: kamMapData[k].s, avgSku: kamMapData[k].invSet.size > 0 ? kamMapData[k].skus/kamMapData[k].invSet.size : 0, freq: kamMapData[k].a.size > 0 ? kamMapData[k].invSet.size/kamMapData[k].a.size : 0, invs: kamMapData[k].invSet.size
     })).sort((a,b) => b.s - a.s).slice(0, 10);
     drawChart('kamChart', kamData, 'label', true); 
     drawVerticalTable('kamHeaderRow', 'kamTableBody', kamData, t('colKam'), false, null, false, false, true); 
@@ -831,7 +835,7 @@ function render() {
     // Xử lý lưu trữ toàn bộ dữ liệu KAE (không cắt slice) trước khi tạo bảng hiển thị
     let kaeDataFull = Object.keys(kaeMap).map(k => ({
         label: k, areaStr: Array.from(kaeMap[k].areas).join(', '),
-        tc: kaeMap[k].p.size, ac: kaeMap[k].a.size, s: kaeMap[k].s, avgSku: kaeMap[k].invs > 0 ? kaeMap[k].skus/kaeMap[k].invs : 0, freq: kaeMap[k].a.size > 0 ? kaeMap[k].invs/kaeMap[k].a.size : 0, invs: kaeMap[k].invs
+        tc: kaeMap[k].p.size, ac: kaeMap[k].a.size, s: kaeMap[k].s, avgSku: kaeMap[k].invSet.size > 0 ? kaeMap[k].skus/kaeMap[k].invSet.size : 0, freq: kaeMap[k].a.size > 0 ? kaeMap[k].invSet.size/kaeMap[k].a.size : 0, invs: kaeMap[k].invSet.size
     })).sort((a,b) => b.s - a.s);
     
     fullKaeData = kaeDataFull; // Gán danh sách đầy đủ vào bộ nhớ toàn cục cho nút tải file
