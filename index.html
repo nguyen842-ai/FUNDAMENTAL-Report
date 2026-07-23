@@ -1,1156 +1,1218 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Quy Hoạch Lộ Trình Di Chuyển</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RTM Strategic Analytics © 2026 TCI</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="icon" type="image/png" href="faviconTCI.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; font-size: 13px; }
-        #app-container { display: flex; height: 100vh; width: 100%; position: relative;}
-        
-        #left-panel { width: 40%; height: 100%; display: flex; flex-direction: column; border-right: 2px solid #cbd5e1; background: #fff; }
-        #upload-section { padding: 15px; background: #e2e8f0; border-bottom: 2px solid #cbd5e1; }
-        .upload-warning { color: #1e40af; font-weight: bold; font-size: 15px; text-transform: uppercase; background: #dbeafe; border: 1px solid #bfdbfe; text-align: center; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
-        .btn-primary { width: 100%; padding: 10px; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; transition: background 0.3s; margin-bottom: 10px; }
-        .btn-primary:hover { background-color: #2563eb; }
-        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; opacity: 0.7; }
-        .btn-warning { background-color: #f59e0b; margin: 0; padding: 8px 10px; flex: 1; }
-        .btn-warning:hover { background-color: #d97706; }
-        .btn-purple { background-color: #8b5cf6; margin: 0; padding: 8px 10px; flex: 1; }
-        .btn-purple:hover { background-color: #7c3aed; }
-        .btn-green { background-color: #10b981; width: auto; margin: 0; padding: 8px 15px; }
-        .btn-green:hover { background-color: #059669; }
-        .file-status-box { margin-bottom: 8px; display: flex; justify-content: space-between; font-weight: bold;}
-        .status-badge { font-weight: normal; font-size: 12px; }
-        
-        #map-container { flex-grow: 1; width: 100%; position: relative; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; background: #e2e8f0; z-index: 1; }
-        #route-toggle-toolbar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; background: white; padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; align-items: center; gap: 15px; border: 2px solid #3b82f6; }
-        .toggle-option { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 13px; font-weight: bold; color: #1e293b;}
-        .toggle-option input { cursor: pointer; }
+    <style>
+        /* =========================================================
+           1. CẤU HÌNH DARK THEME PREMIUM (iOS STYLING & 5 COLORS)
+           ========================================================= */
+        :root {
+            --bg-main: #16181D;
+            --bg-card: #21232A;
+            
+            --color-1: #0B486B;
+            --color-2: #3B8686;
+            --color-3: #79BD9A;
+            --color-4: #A8DBA8;
+            --color-5: #CFF09E;
 
-        #right-panel { width: 60%; height: 100%; padding: 20px; box-sizing: border-box; overflow-y: auto; background-color: #ffffff; position: relative; }
-        .filter-header-section { display: flex; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        #avatar-container { width: 150px; height: 180px; margin-right: 20px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background-color: #fff; overflow: hidden; flex-shrink: 0; }
-        #avatar-container img { width: 100%; height: 100%; object-fit: cover; }
-        .filters-wrapper { flex-grow: 1; }
-        .filter-row { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 12px; }
-        .filter-row h3 { margin: 0; min-width: 90px; color: #1e293b; padding-top: 5px; }
-        .filter-item { display: flex; flex-direction: column; flex: 1; }
-        .filter-item label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #475569; }
-        .filter-item select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; width: 100%; }
-        .day-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 35px; align-items: center; }
-        .day-chip { padding: 6px 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s; user-select: none; }
-        .day-chip:hover { background: #e2e8f0; }
-        .day-chip.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        .action-buttons-container { display: flex; gap: 10px; flex: 1; }
+            --primary: var(--color-4);
+            --secondary: var(--color-2);
+            --text-main: #FFFFFF;
+            --text-muted: #A0AAB5;
+            --border-color: rgba(121, 189, 154, 0.12);
+            
+            --border-radius: 22px; 
+            --border-radius-sm: 12px;
+            --ios-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 
-        .summary-card { margin-bottom: 20px; }
-        .header-title-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px; }
-        .header-title-row h2, .header-title-row h3 { margin: 0; color: #0f172a; }
-        
-        .warning-section-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 15px; margin-bottom: 25px; display: none; }
-        .warning-title { color: #dc2626; font-size: 16px; font-weight: bold; margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;}
-        .warning-tag { background: #fee2e2; color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #fca5a5; display: inline-block; margin-bottom: 4px; margin-right: 4px;}
+            --accent-warning: #ea580c;
+            --accent-danger: #dc2626;
+            --accent-success: var(--color-5);
+        }
 
-        .data-table-container { overflow-x: auto; max-width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 25px;}
-        table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 13px; }
-        th, td { padding: 8px 10px; text-align: left; border: 1px solid #e2e8f0; }
-        th.route-th { background-color: #1e40af !important; color: white !important; font-weight: bold; text-align: center; vertical-align: middle; white-space: normal !important; word-wrap: break-word; }
-        th.danger-th { background-color: #dc2626 !important; color: white !important; }
-        th { position: sticky; top: 0; z-index: 2; }
-        td { white-space: nowrap; }
-        tfoot { background-color: #e2e8f0; font-weight: bold; }
-        .num-right { text-align: right; }
-        .ds-col { background-color: #fef3c7 !important; color: #065f46 !important; font-weight: bold; }
-        
-        /* CSS HÌNH KHỐI BẢN ĐỒ */
-        .route-marker { font-weight: bold; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px; box-sizing: border-box; }
-        .marker-circle { border-radius: 50%; }
-        .marker-square { border-radius: 6px; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-main); color: var(--text-main); font-size: 13px; overflow-x: hidden; }
 
-        /* CSS HIỆU ỨNG HOVER & CLICK CHO BẢNG CHI TIẾT */
-        .hover-row { transition: background-color 0.2s ease; }
-        .hover-row:hover td { background-color: #bfdbfe !important; }
-        
-        .edit-cell { cursor: pointer; user-select: none; transition: background 0.2s; }
-        .edit-cell:hover { background-color: #93c5fd !important; }
-        
-        .stt-input { width: 45px; text-align: center; font-weight: bold; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; }
-        .stt-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); }
-    </style>
+        /* =========================================================
+           2. MÀN HÌNH LOADING
+           ========================================================= */
+        #loader-wrapper {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-main); z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.4s ease;
+        }
+        #loader-wrapper.hidden { opacity: 0; visibility: hidden; }
+        .spinner-container { position: relative; width: 60px; height: 60px; margin-bottom: 20px; }
+        .spinner-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid transparent; }
+        .spinner-ring:nth-child(1) { border-top-color: var(--primary); animation: spin 1s linear infinite; }
+        .spinner-ring:nth-child(2) { border-bottom-color: var(--secondary); animation: spin-reverse 1.2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+        .loader-text { color: var(--primary); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; animation: pulse 1s infinite; text-align: center;}
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* =========================================================
+           3. LAYOUT REPORT & RESPONSIVE
+           ========================================================= */
+        .main-content { padding: 30px; width: 100%; min-height: 100vh; }
+        
+        .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; gap: 20px; flex-wrap: wrap;}
+        .header-left { display: flex; align-items: flex-start; gap: 25px; flex-wrap: wrap; }
+        .exec-title h1 { margin: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .exec-title p { margin: 4px 0 0 0; color: var(--secondary); font-size: 12px; font-weight: 600; }
+        
+        .lang-toggle { display: flex; background: var(--bg-card); padding: 4px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); }
+        .lang-toggle button { background: transparent; border: none; color: var(--text-muted); padding: 6px 14px; font-size: 11px; font-weight: 800; cursor: pointer; border-radius: 8px; transition: 0.2s; }
+        .lang-toggle button.active { background: var(--primary); color: var(--bg-main); }
+
+        .top-filters-hz { display: flex; gap: 15px; flex-wrap: wrap; }
+        .filter-item-hz label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 5px; letter-spacing: 0.5px; }
+        .ms-box { position: relative; width: 150px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-card); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .ms-label { padding: 9px 14px; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ms-label::after { content: '▼'; float: right; font-size: 8px; color: var(--secondary); margin-top: 3px; }
+        .ms-dropdown { position: absolute; top: 105%; right: 0; min-width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); z-index: 999; max-height: 250px; overflow-y: auto; display: none; box-shadow: 0 12px 30px rgba(0,0,0,0.6); }
+        .ms-opt { padding: 10px 15px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .ms-opt:hover { background: var(--secondary); }
+        .ms-opt.selected { background: var(--primary); color: var(--bg-main); font-weight: bold; }
+
+        /* THE PULSE BLOCK */
+        .section-tag { display: inline-block; padding: 5px 12px; background: rgba(121, 189, 154, 0.08); border-left: 4px solid var(--primary); color: var(--primary); font-size: 11px; font-weight: 800; margin-bottom: 18px; border-radius: 0 6px 6px 0; letter-spacing: 0.5px; }
+        .pulse-row { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 35px; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        
+        .kpi-card { background: var(--bg-card); border-radius: var(--border-radius); padding: 22px; border: 1px solid var(--border-color); box-shadow: var(--ios-shadow); transition: transform 0.25s, border-color 0.25s; display: flex; flex-direction: column; justify-content: space-between; }
+        .kpi-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .kpi-card .label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.3px; white-space: normal; line-height: 1.4; }
+        .kpi-card .value { font-size: 26px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; margin-bottom: 8px; }
+        .kpi-card .sub { font-size: 11px; color: var(--primary); font-weight: 600; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+        
+        .tree-box { background: var(--bg-card); border-radius: var(--border-radius); padding: 22px; border: 1px solid var(--border-color); box-shadow: var(--ios-shadow); height: 100%; display: flex; flex-direction: column; min-height: 250px;}
+        .tree-content { flex-grow: 1; overflow-y: auto; overflow-x: auto; max-height: 300px; }
+        .tree-node summary { padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: var(--border-radius-sm); cursor: pointer; font-weight: 800; font-size: 11px; list-style: none; margin-bottom: 6px; }
+        .tree-node summary::-webkit-details-marker { display: none; }
+        .t-name { display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; color: var(--text-main);}
+        .t-name::before { content: '▶'; font-size: 8px; margin-right: 10px; color: var(--secondary); transition: 0.2s; flex-shrink: 0; }
+        .tree-node[open] summary .t-name::before { transform: rotate(90deg); }
+        .t-children { border-left: 1px solid var(--secondary); margin-left: 18px; padding-left: 0; margin-bottom: 10px; }
+        .t-leaf { padding: 7px 14px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .leaf-name { padding-left: 18px; color: var(--text-muted); }
+        .leaf-name::before { display: none; }
+
+        /* CHARTS & TABLES */
+        .chart-box { background: var(--bg-card); border-radius: var(--border-radius); border: 1px solid var(--border-color); box-shadow: var(--ios-shadow); padding: 25px; margin-bottom: 35px; width: 100%; overflow: hidden;}
+        .chart-header { margin-bottom: 20px; }
+        .chart-title { font-size: 14px; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; gap: 10px; line-height: 1.4; }
+        .chart-title::before { content: ""; width: 4px; height: 16px; background: var(--primary); border-radius: 2px; }
+        .chart-subtitle { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 4px; line-height: 1.4; }
+        
+        .side-by-side { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; }
+        
+        .table-wrap { overflow-x: auto; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); margin-top: 20px; width: 100%; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 500px; }
+        .data-table th { background: var(--secondary); color: var(--text-main); padding: 12px 10px; text-align: center; font-weight: 800; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid var(--border-color); white-space: normal; line-height: 1.4; word-wrap: break-word; }
+        .data-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--text-main); white-space: nowrap; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .label-cell { background: var(--bg-card); color: var(--primary); font-weight: 800; text-align: left !important; width: 160px; position: sticky; left: 0; z-index: 2; border-right: 1px solid var(--border-color); white-space: normal !important; line-height: 1.4; }
+        
+        .risk-flag { color: var(--accent-danger) !important; font-weight: 800 !important; }
+
+        .pct-badge { background: rgba(121, 189, 154, 0.15); color: var(--primary); padding: 3px 6px; border-radius: 5px; font-size: 9px; margin-left: 8px; font-weight: 800; display: inline-block;}
+        .pct-badge.active-badge { background: rgba(207, 240, 158, 0.15); color: var(--accent-success); }
+
+        .segment-table { width:100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; background: var(--bg-main); min-width: 600px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); overflow: hidden; }
+        .segment-table th { padding: 11px 10px; border: 1px solid var(--border-color); background: var(--secondary); color: var(--text-main); font-size: 11px; text-transform: uppercase; white-space: normal; line-height: 1.4; word-wrap: break-word; }
+        .segment-table td { padding: 11px 10px; border: 1px solid var(--border-color); text-align: center; white-space: nowrap; color: var(--text-main); }
+        .seg-area-cell { background-color: var(--bg-card); font-weight: bold; text-align: left !important; color: var(--primary); border-right: 2px solid var(--border-color) !important; position: sticky; left: 0; z-index: 2;}
+        .seg-name-cell { text-align: left !important; font-weight: 600; color: var(--text-muted); position: sticky; left: 0; background: var(--bg-main); z-index: 1; border-right: 1px solid var(--border-color); }
+
+        /* Nút Tải Excel phong cách Premium iOS */
+        .btn-ios-download {
+            background: var(--primary);
+            color: var(--bg-main);
+            border: none;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-ios-download:hover {
+            opacity: 0.9;
+        }
+        .btn-ios-download:active {
+            transform: scale(0.96);
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        @media (max-width: 1400px) {
+            .pulse-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 1024px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .ms-box { width: 130px; }
+        }
+        @media (max-width: 768px) {
+            .top-header { flex-direction: column; align-items: flex-start; }
+            .label-cell, .seg-area-cell, .seg-name-cell { position: relative; left: auto !important; z-index: 1; border-right: none !important; }
+        }
+        @media (max-width: 500px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<div id="app-container">
-    <div id="left-panel">
-        <div id="upload-section">
-            <div class="upload-warning">
-                BẢN ĐỒ QUY HOẠCH TUYẾN MASTER
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button id="btnLoadData" class="btn-primary" style="margin-bottom:0; flex: 1; padding: 10px 5px; font-size: 12px;" onclick="loadDataFromSupabase()">📥 Dữ liệu hệ thống</button>
-                <input type="file" id="localFileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleLocalFileUpload(event)">
-                <button id="btnLocalUpload" class="btn-primary btn-purple" style="margin-bottom:0; flex: 1; padding: 10px 5px; font-size: 12px;" onclick="document.getElementById('localFileInput').click()">📁 Tự tải dữ liệu lên</button>
-            </div>
-
-            <div class="file-status-box">
-                <span>1. Dữ liệu Tuyến:</span>
-                <span id="statusRoute" class="status-badge" style="color:#64748b;">(Chưa tải)</span>
-            </div>
-            <div class="file-status-box">
-                <span>2. Dữ liệu Doanh số:</span>
-                <span id="statusSales" class="status-badge" style="color:#64748b;">(Chưa tải)</span>
-            </div>
-
-            <!-- KHUNG CHÚ THÍCH KÝ HIỆU BẢN ĐỒ -->
-            <div style="font-size: 11.5px; color: #334155; background: #fff; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 5px; margin-top: 10px;">
-                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#64748b; border:1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);"></span> F4 thuần</span>
-                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#64748b; border:1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);"></span> F2 thuần</span>
-                <span style="display:flex; align-items:center; gap:4px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" style="filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.3));"><path fill="#64748b" stroke="white" stroke-width="1.5" stroke-linejoin="round" d="M12 2 L22 21 L2 21 Z"/></svg> Tuyến trộn (F4+F2)
-                </span>
-            </div>
-        </div>
-        <div id="map-container">
-            <div id="route-toggle-toolbar">
-                <label class="toggle-option"><input type="radio" name="routeType" value="original" checked onchange="handleRouteToggle()"><span>📍 Tuyến Gốc</span></label>
-                <label class="toggle-option"><input type="radio" name="routeType" value="optimized" onchange="handleRouteToggle()"><span style="color:#f59e0b;">✨ Tuyến Mới</span></label>
-                <div style="width: 2px; height: 16px; background: #cbd5e1; margin: 0 8px;"></div>
-                <label class="toggle-option">
-                    <input type="checkbox" id="chk-draw-lines" onchange="processDataAndRender()">
-                    <span style="color:#10b981;">🔗 Hiện liên kết</span>
-                </label>
-            </div>
-            <div id="map"></div>
-        </div>
-    </div>
-
-    <div id="right-panel">
-        <div class="filter-header-section">
-            <div id="avatar-container">
-                <img id="avatar-img" src="" alt="Avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23cbd5e1\' stroke-width=\'2\'><circle cx=\'12\' cy=\'8\' r=\'4\'/><path d=\'M18 21v-2a4 4 0 0 0-4-4H10a4 4 0 0 0-4 4v2\'/></svg>';">
-            </div>
-            <div class="filters-wrapper">
-                
-                <div class="filter-row">
-                    <h3>Bộ Lọc</h3>
-                    <div class="filter-item">
-                        <label>Khu vực (Area)</label>
-                        <select id="sel-area" disabled><option value="">-- Chọn Khu vực --</option></select>
-                    </div>
-                </div>
-
-                <div class="filter-row">
-                    <h3 style="min-width: 90px; margin: 0;"></h3>
-                    <div class="filter-item">
-                        <label>Đơn vị PP (NPP)</label>
-                        <select id="sel-npp" disabled><option value="">-- Chọn NPP --</option></select>
-                    </div>
-                </div>
-                
-                <div class="filter-row">
-                    <h3 style="min-width: 90px; margin: 0;"></h3>
-                    <div class="filter-item">
-                        <label>Nhân viên</label>
-                        <select id="sel-nv" disabled><option value="">-- Chọn Nhân viên --</option></select>
-                    </div>
-                </div>
-
-                <div class="filter-row">
-                    <h3 style="min-width: 90px; margin: 0;"></h3>
-                    <div class="filter-item" style="flex: 2;">
-                        <label>Thứ (Day) - Chọn nhiều ngày</label>
-                        <div id="day-chips-container" class="day-chips">
-                            <span style="color:#94a3b8; font-size: 13px;">-- Chọn Thứ --</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="filter-row" style="margin-top: 15px;">
-                    <h3 style="min-width: 90px; margin: 0;"></h3>
-                    <div class="action-buttons-container">
-                        <button id="btn-ai-optimize" class="btn-primary btn-warning" onclick="optimizeRouteWithAI()" disabled>✨ AI Tối Ưu Tuyến</button>
-                        <button id="btn-dl-map-week" class="btn-primary btn-purple" onclick="downloadWeeklyMap()" disabled>🗺️ Tải Ảnh Bản Đồ</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="warning-section" class="warning-section-box">
-            <h3 class="warning-title">🚨 CẢNH BÁO: DANH SÁCH KHÁCH HÀNG CẦN KIỂM TRA LẠI</h3>
-            <div style="margin-top:0; margin-bottom: 12px; font-size:12px; color:#475569; line-height: 1.5;">
-                <strong>Lưu ý:</strong><br>
-                - Khách bị <strong>lỗi tọa độ</strong> sẽ tạm ẩn khỏi bản đồ để tránh làm hỏng thuật toán AI.<br>
-                - Khách bị <strong>lỗi Chủ nhật</strong> hoặc <strong>sai Tần suất</strong> vẫn hiển thị trên bản đồ để bạn có thể ra lệnh cho Trợ lý AI dời tuyến.
-            </div>
-            <div class="data-table-container" style="margin-bottom: 0;">
-                <table id="warning-table" style="min-width: 600px;">
-                    <thead>
-                        <tr>
-                            <th class="route-th danger-th" style="width: 80px;">Mã KH</th>
-                            <th class="route-th danger-th">Tên Khách Hàng</th>
-                            <th class="route-th danger-th" style="width: 200px;">Chi Tiết Lỗi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="warning-body"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="summary-card" id="dashboard-section" style="display: none;">
-            <div class="header-title-row">
-                <h2>📊 Bảng So Sánh Khoảng Cách</h2>
-            </div>
-            <div class="data-table-container">
-                <table id="comparison-table">
-                    <thead id="comp-head"></thead>
-                    <tbody id="comp-body"></tbody>
-                    <tfoot id="comp-foot"></tfoot>
-                </table>
-            </div>
-
-            <div id="ai-chat-section" style="display: none; margin-top: 25px; margin-bottom: 25px;">
-                <div class="header-title-row">
-                    <h3>✨ Trợ Lý AI Tinh Chỉnh Lộ Trình</h3>
-                </div>
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px;">
-                    <div style="font-size: 12px; color: #64748b; margin-bottom: 8px; font-style: italic;">
-                        *Ví dụ: "Dời các khách hàng Chủ nhật sang Thứ 6 và đưa lên đầu tuyến"*
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="ai-chat-input" placeholder="Nhập yêu cầu điều chỉnh tuyến tại đây..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;">
-                        <button id="btn-send-ai-chat" class="btn-primary btn-warning" onclick="sendCustomRequestToAI()" style="margin: 0; padding: 10px 15px; width: auto; font-size: 13px;">🚀 Gửi yêu cầu</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="header-title-row" style="margin-top: 30px;">
-                <div style="display: flex; align-items: baseline; gap: 15px;">
-                    <h2>📋 Bảng Chi Tiết Ghé Thăm</h2>
-                    <span style="font-size: 13px; color: #059669; font-weight: 500;">(Click các ô Tần suất / Thứ hoặc nhập số STT để Sửa Live Bản đồ)</span>
-                </div>
-                <button class="btn-primary btn-green" onclick="exportDetailToExcel()">📥 Tải Bảng Excel</button>
-            </div>
-            <div class="data-table-container">
-                <table id="detail-table">
-                    <thead id="table-head"></thead>
-                    <tbody id="table-body"></tbody>
-                    <tfoot id="table-foot"></tfoot>
-                </table>
-            </div>
-        </div>
-    </div>
+<div id="loader-wrapper">
+    <div class="spinner-container"><div class="spinner-ring"></div><div class="spinner-ring"></div></div>
+    <div class="loader-text">Analyzing Strategic Data...</div>
 </div>
 
+<main class="main-content">
+    
+    <header class="top-header">
+        <div class="header-left">
+            <div class="exec-title">
+                <h1 data-i18n="mainTitle">RTM STRATEGIC DASHBOARD</h1>
+                <p data-i18n="subTitle">Đánh giá Hiệu quả Phân phối, Thực thi Tuyến & Phân khúc Sức mua</p>
+            </div>
+            <div class="lang-toggle" style="margin-top:15px;">
+                <button id="btn-vi" onclick="setLang('vi')" class="active">VI</button>
+                <button id="btn-en" onclick="setLang('en')">EN</button>
+            </div>
+        </div>
+        
+       <div class="top-filters-hz">
+    <div class="filter-item-hz"><label data-i18n="lblMonth">Tháng</label><div class="ms-box" onclick="toggleMS('month')"><div class="ms-label" id="lbl-month">Tất cả</div><div class="ms-dropdown" id="drop-month"></div></div></div>
+    <div class="filter-item-hz"><label data-i18n="lblRegion">Miền</label><div class="ms-box" onclick="toggleMS('hq')"><div class="ms-label" id="lbl-hq">Tất cả</div><div class="ms-dropdown" id="drop-hq"></div></div></div>
+    <div class="filter-item-hz"><label data-i18n="lblArea">Khu vực</label><div class="ms-box" onclick="toggleMS('area')"><div class="ms-label" id="lbl-area">Tất cả</div><div class="ms-dropdown" id="drop-area"></div></div></div>
+</div>
+    </header>
+
+    <div class="section-tag" data-i18n="secPulse">TỔNG QUAN CHUNG</div>
+    <div class="pulse-row">
+        <div class="kpi-grid">
+            <div class="kpi-card md-focus">
+                <div class="label" data-i18n="kpiSalesLbl">TỔNG SELL-OUT & KH LÊN ĐƠN</div>
+                <div class="value" id="val-sales">0</div>
+                <div class="sub"><span>KH lên đơn: <b id="val-active-cust" style="color:var(--text-main)">0</b></span></div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiStrikeLbl">TỶ LỆ CHỐT ĐƠN (TRUE STRIKE RATE)</div>
+                <div class="value" id="val-true-strike">0%</div>
+                <div class="sub">
+                    <span>Tỷ lệ độ phủ: <b id="val-penetration" style="color:var(--text-main)">0%</b></span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiDropF4Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F4)</div>
+                <div class="value" id="val-drop-f4">0</div>
+                <div class="sub">
+                    <span><span data-i18n="lblFreq">Tần suất lên đơn</span>: <b id="val-freq-f4" style="color:var(--accent-success)">0</b></span> 
+                    <span><span data-i18n="lblLppc">SKU TB/Đơn</span>: <b id="val-lppc-f4" style="color:var(--accent-warning)">0</b></span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiDropF2Lbl">GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F2)</div>
+                <div class="value" id="val-drop-f2">0</div>
+                <div class="sub">
+                    <span><span data-i18n="lblFreq">Tần suất lên đơn</span>: <b id="val-freq-f2" style="color:var(--accent-success)">0</b></span> 
+                    <span><span data-i18n="lblLppc">SKU TB/Đơn</span>: <b id="val-lppc-f2" style="color:var(--accent-warning)">0</b></span>
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiKaeLbl">KAE ĐANG HOẠT ĐỘNG</div>
+                <div class="value" id="val-headcount-kae">0</div>
+                <div class="sub" id="mom-headcount-kae"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiDsrLbl">DSR ĐANG HOẠT ĐỘNG</div>
+                <div class="value" id="val-headcount-dsr">0</div>
+                <div class="sub" id="mom-headcount-dsr"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiAvgKaeLbl">Doanh số bình quân mỗi KAE/ tháng</div>
+                <div class="value" id="val-avg-kae" style="color: var(--primary);">0</div>
+                <div class="sub" id="mom-avg-kae"></div>
+            </div>
+            <div class="kpi-card">
+                <div class="label" data-i18n="kpiAvgDsrLbl">Doanh số bình quân mỗi DSR/ tháng</div>
+                <div class="value" id="val-avg-dsr" style="color: var(--primary);">0</div>
+                <div class="sub" id="mom-avg-dsr"></div>
+            </div>
+        </div>
+        <div class="tree-box">
+            <h3 style="margin:0 0 15px 0; font-size:11px; text-transform:uppercase; color:var(--primary)" data-i18n="treeTitle">DANH MỤC NHÂN SỰ</h3>
+            <div class="tree-content" id="tree-container"></div>
+        </div>
+    </div>
+
+    <div class="section-tag" data-i18n="secP1">PHẦN 1: TỔNG QUAN THEO KHU VỰC</div>
+    <div class="chart-box">
+        <div class="chart-header">
+            <div class="chart-title" data-i18n="cAreaTitle">HIỆU QUẢ SELL-OUT THEO KHU VỰC</div>
+            <div class="chart-subtitle" data-i18n="cAreaSub">⚠️ Cảnh báo vùng có Tỷ lệ khách hàng lên đơn dưới 50%</div>
+        </div>
+        <div style="height: 450px;"><canvas id="areaChart"></canvas></div>
+        <div class="table-wrap"><table class="data-table"><thead id="areaHeaderRow"></thead><tbody id="areaTableBody"></tbody></table></div>
+    </div>
+
+    <div class="chart-box">
+        <div class="chart-header">
+            <div class="chart-title" data-i18n="cWeekTitle">SELL OUT THEO TUẦN</div>
+            <div class="chart-subtitle" id="weekChartSub">Khu vực đang xem: Tất cả khu vực</div>
+        </div>
+        <div style="height: 450px;"><canvas id="weekChart"></canvas></div>
+        <div class="table-wrap"><table class="data-table"><thead id="weekHeaderRow"></thead><tbody id="weekTableBody"></tbody></table></div>
+    </div>
+
+    <div class="section-tag" data-i18n="secP2">PHẦN 2: THỰC THI TẠI THỊ TRƯỜNG</div>
+    <div class="side-by-side">
+        <div class="chart-box" style="margin-bottom: 0;">
+            <div class="chart-title" data-i18n="cKamTitle">TOP 10 KAM CÓ SELL OUT TỐT NHẤT</div>
+            <div style="height: 450px;"><canvas id="kamChart"></canvas></div>
+            <div class="table-wrap"><table class="data-table"><thead id="kamHeaderRow"></thead><tbody id="kamTableBody"></tbody></table></div>
+        </div>
+        
+        <div class="chart-box" style="margin-bottom: 0;">
+            <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div class="chart-title" data-i18n="cKaeTitle">TOP 10 KAE CÓ PERFORMANCE TỐT NHẤT</div>
+                <button id="btn-export-kae" data-i18n="btnExportKae" onclick="exportKaeExcel()" class="btn-ios-download">Tải danh sách đầy đủ</button>
+            </div>
+            <div style="height: 450px;"><canvas id="dayChart"></canvas></div>
+            <div class="table-wrap"><table class="data-table"><thead id="dayHeaderRow"></thead><tbody id="dayTableBody"></tbody></table></div>
+        </div>
+    </div>
+    <div style="height: 30px;"></div> 
+
+    <div class="section-tag" data-i18n="secP3">PHẦN 3: ĐỘ PHỦ & CHIẾN LƯỢC ĐIỂM BÁN</div>
+    <div class="chart-box">
+        <div class="chart-title" data-i18n="cSegTitle">PHÂN TÍCH SỨC MUA THEO PHÂN KHÚC TẠP HÓA</div>
+        <div class="chart-subtitle" data-i18n="cSegSub">Kèm Box tỷ trọng (%) để đánh giá cơ cấu khách hàng. Bảng tự động gộp Toàn Quốc khi chọn "Tất cả Khu vực".</div>
+        <div class="table-wrap" id="segmentAreaTableContainer" style="border:none;"></div>
+    </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
-    let selectedDays = []; 
-    let loadStatus = { route: 'idle' };
-    let allValidData = [];     
-    let allWarningData = [];   
-    let currentNVDataOriginal = [];  
-    let currentNVDataOptimized = []; 
-    let hasOptimizedData = false;    
-    let isOptimizedView = false;    
-    
-    window.salesDataMap = {}; 
-
-    const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p'; 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const BUCKET_NAME = 'mappingdata';
-    const FILE_ROUTE = 'tuyen.xlsx'; 
-    const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/';
-
-    const DAY_COLS = [11, 12, 13, 14, 15, 16, 17];
-    const DAYS_TEXT = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
-    
-    const palettes = {
-        'Thứ 2': { base: '#22c55e', light: '#bbf7d0', textLight: '#000' }, 
-        'Thứ 3': { base: '#ef4444', light: '#fecaca', textLight: '#000' }, 
-        'Thứ 4': { base: '#a855f7', light: '#e9d5ff', textLight: '#000' }, 
-        'Thứ 5': { base: '#eab308', light: '#fef08a', textLight: '#000' }, 
-        'Thứ 6': { base: '#000000', light: '#cbd5e1', textLight: '#000' }, 
-        'Thứ 7': { base: '#3b82f6', light: '#bfdbfe', textLight: '#000' }, 
-        'Chủ nhật': { base: '#f97316', light: '#fed7aa', textLight: '#000' } 
-    };
-
-    const map = L.map('map').setView([10.8231, 106.6297], 10);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-    
-    let routeLayer = L.layerGroup().addTo(map); 
-    let lineLayer = L.layerGroup().addTo(map);  
-    window.currentMarkers = {}; 
-    window.isFirstMapRender = true; 
-
-    const selArea = document.getElementById('sel-area');
-    const selNPP = document.getElementById('sel-npp');
-    const selNV = document.getElementById('sel-nv');
-    
-    const dashboard = document.getElementById('dashboard-section');
-    const warningSection = document.getElementById('warning-section');
-    const btnOptimize = document.getElementById('btn-ai-optimize'); 
-    const btnDlMapWeek = document.getElementById('btn-dl-map-week');
-    const toggleToolbar = document.getElementById('route-toggle-toolbar');
-
-    function renderStatusBadge(elId, statusKey) {
-        const el = document.getElementById(elId);
-        const mapStyle = {
-            idle: { text: "(Chưa tải)", color: '#64748b' },
-            loading: { text: "⌛ Đang xử lý...", color: '#ea580c', bold: true },
-            done: { text: "✅ Đã tải xong", color: '#16a34a', bold: true },
-            error: { text: "❌ Lỗi", color: '#dc2626', bold: true },
-            warn: { text: "⚠️ Tải 1 phần", color: '#f59e0b', bold: true }
-        };
-        const s = mapStyle[statusKey] || mapStyle.idle;
-        el.innerHTML = `<span style="color:${s.color};${s.bold ? ' font-weight:bold;' : ''}">${s.text}</span>`;
-    }
-
-    // --- HÀM TẢI DOANH SỐ TỪ BUCKET THEO CẤU TRÚC CHUẨN ---
-    async function loadSalesData() {
-        renderStatusBadge('statusSales', 'loading');
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { 
-                console.error("Chưa đăng nhập, không thể lấy file doanh số.");
-                renderStatusBadge('statusSales', 'error'); 
-                return; 
-            }
-
-            const months = ['M5', 'M6', 'M7']; // Tìm đúng file dataM5.js, dataM6.js, dataM7.js
-            
-            // Tìm trong bucket 'data' như ví dụ của bạn
-            let { data: signedUrls, error } = await supabaseClient.storage.from('data').createSignedUrls(months.map(m => `data${m}.js`), 60);
-            
-            if (error || !signedUrls || signedUrls.length === 0 || signedUrls[0].error) {
-                console.log("Thử tìm doanh số trong mappingdata/data/ ...");
-                const alt = await supabaseClient.storage.from(BUCKET_NAME).createSignedUrls(months.map(m => `data/data${m}.js`), 60);
-                if (!alt.error && alt.data) signedUrls = alt.data;
-            }
-
-            if (signedUrls && signedUrls.length > 0) {
-                let successCount = 0;
-                for (let item of signedUrls) {
-                    if (!item.error && item.signedUrl) {
-                        try {
-                            let res = await fetch(item.signedUrl);
-                            if (res.ok) {
-                                let text = await res.text();
-                                let mMatch = item.path.match(/M\d+/);
-                                let mName = mMatch ? mMatch[0] : 'M5'; 
-                                
-                                let arr = [];
-                                
-                                // Dò tìm đoạn mảng JSON nằm giữa cặp ngoặc vuông [ ... ]
-                                let matchArray = text.match(/\[[\s\S]*\]/);
-                                if (matchArray) {
-                                    try {
-                                        // eval an toàn bọc trong ngoặc tròn để parse mảng
-                                        arr = eval('(' + matchArray[0] + ')'); 
-                                    } catch(e) {
-                                        console.warn("Lỗi parse array từ file doanh số:", e);
-                                    }
-                                }
-                                
-                                if (Array.isArray(arr) && arr.length > 0) {
-                                    successCount++;
-                                    arr.forEach(row => {
-                                        let keys = Object.keys(row);
-                                        if(keys.length < 2) return;
-                                        
-                                        // Ưu tiên cao cho cusCode và sales theo cấu trúc mới
-                                        let ma_kh = row['cusCode'] || row['Mã KH'] || row['ma_kh'] || row['Customer ID'] || row['Ma_KH'] || row['Mã Khách Hàng'];
-                                        let ds = row['sales'] || row['Doanh số'] || row['doanh_so'] || row['Sales'] || row['DS'] || row['Thực Đạt'];
-                                        
-                                        if(ma_kh === undefined) ma_kh = row[keys[0]];
-                                        if(ds === undefined) ds = row[keys[1]];
-                                        
-                                        if (ma_kh !== undefined && ma_kh !== null) {
-                                            let id = ma_kh.toString().trim();
-                                            if (!window.salesDataMap[id]) window.salesDataMap[id] = {};
-                                            // Chống lỗi chuỗi DS có chứa phẩy
-                                            let cleanDs = ds ? ds.toString().replace(/,/g, '').replace(/\s/g, '') : "0";
-                                            window.salesDataMap[id][mName] = parseFloat(cleanDs) || 0;
-                                        }
-                                    });
-                                }
-                            }
-                        } catch(err) {
-                            console.error("Lỗi đọc nội dung file:", item.path, err);
-                        }
-                    }
-                }
-                renderStatusBadge('statusSales', successCount > 0 ? 'done' : 'error');
-            } else {
-                renderStatusBadge('statusSales', 'warn');
-            }
-        } catch (e) {
-            console.error("Lỗi tổng quát khi tải Doanh số:", e);
-            renderStatusBadge('statusSales', 'error');
-        }
-    }
-
-    function normalizeOrder(targetData) {
-        let dayCounters = {"Thứ 2":1,"Thứ 3":1,"Thứ 4":1,"Thứ 5":1,"Thứ 6":1,"Thứ 7":1,"Chủ nhật":1};
-        const dayOrderRules = {"Thứ 2":2,"Thứ 3":3,"Thứ 4":4,"Thứ 5":5,"Thứ 6":6,"Thứ 7":7,"Chủ nhật":8};
-        const freqOrderRules = {"F4": 1, "F2-1": 2, "F2-2": 3};
-        
-        targetData.sort((a, b) => {
-            let dayDiff = (dayOrderRules[a.thu] || 99) - (dayOrderRules[b.thu] || 99);
-            if (dayDiff !== 0) return dayDiff;
-            
-            let orderDiff = (a._ai_order || 999) - (b._ai_order || 999);
-            if (orderDiff !== 0) return orderDiff;
-            
-            return (freqOrderRules[a.freq] || 99) - (freqOrderRules[b.freq] || 99);
-        });
-        
-        targetData.forEach(r => {
-            if (dayCounters[r.thu] !== undefined) {
-                r._ai_order = dayCounters[r.thu]++;
-            }
-        });
-    }
-
-    function processRawExcelData(jsonRoute) {
-        allValidData = [];
-        allWarningData = [];
-
-        jsonRoute.forEach((row, rowIndex) => {
-            if (rowIndex === 0 || !row[0]) return;
-
-            let npp = row[2];
-            let nv = row[4];
-            let ma_kh = row[5];
-            let ten_kh = row[6];
-            let dia_chi = row[7] ? row[7].toString().trim() : 'Chưa có thông tin địa chỉ';
-            
-            let lat = parseFloat(row[22]); 
-            let lng = parseFloat(row[23]); 
-            
-            let areaRaw = row[24];
-            let area = (areaRaw === 0 || areaRaw === '0' || !areaRaw) ? "Khác" : areaRaw.toString().trim();
-
-            let isValidCoord = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-            let addedToWarning = false;
-
-            let w1 = (row[18] || '').toString().toLowerCase().trim() === 'x';
-            let w2 = (row[19] || '').toString().toLowerCase().trim() === 'x';
-            let w3 = (row[20] || '').toString().toLowerCase().trim() === 'x';
-            let w4 = (row[21] || '').toString().toLowerCase().trim() === 'x';
-            
-            let freqType = "Lỗi Tần Suất";
-            if (w1 && w2 && w3 && w4) freqType = "F4";
-            else if (w1 && !w2 && w3 && !w4) freqType = "F2-1";
-            else if (!w1 && w2 && !w3 && w4) freqType = "F2-2";
-
-            DAY_COLS.forEach((colIdx, i) => {
-                let cellVal = (row[colIdx] || '').toString().toLowerCase().trim();
-                if (cellVal === 'x') {
-                    let dayName = DAYS_TEXT[i];
-                    let warnings = [];
-                    
-                    if (!isValidCoord) warnings.push("Trống / Sai Tọa độ");
-                    if (dayName === 'Chủ nhật') warnings.push("Tuyến rơi vào Chủ nhật");
-                    if (freqType === "Lỗi Tần Suất") warnings.push("Sai chuẩn tần suất (Không phải F4, F2-1, F2-2)");
-
-                    if (warnings.length > 0 && !addedToWarning) {
-                        allWarningData.push({ area: area, npp: npp, nv: nv, ma_kh: ma_kh, ten_kh: ten_kh, errors: warnings });
-                        addedToWarning = true;
-                    }
-
-                    if (isValidCoord) {
-                        allValidData.push({
-                            area: area, npp: npp, nv: nv, ma_kh: ma_kh, ten_kh: ten_kh, dia_chi: dia_chi, 
-                            thu: dayName, lat: lat, lng: lng, freq: freqType, _ai_order: 999
-                        });
-                    }
-                }
-            });
-        });
-    }
-
-    async function loadDataFromSupabase() {
-        const btn = document.getElementById('btnLoadData');
-        btn.disabled = true;
-        loadStatus.route = 'loading'; renderStatusBadge('statusRoute', loadStatus.route);
-        
-        await loadSalesData(); 
-        
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { alert("Phiên làm việc hết hạn. Vui lòng đăng nhập lại."); window.location.href = HUB_URL; return; }
-            const { data: signedUrls, error } = await supabaseClient.storage.from(BUCKET_NAME).createSignedUrls([FILE_ROUTE], 60);
-            if (error || !signedUrls || signedUrls.length < 1) throw new Error("Lỗi xác thực file.");
-
-            let resRoute = await fetch(signedUrls[0].signedUrl);
-            if (!resRoute.ok) throw new Error("Lỗi tải file Route");
-            
-            let arrRoute = await resRoute.arrayBuffer();
-            let wbRoute = XLSX.read(arrRoute, {type: 'array'});
-            let jsonRoute = XLSX.utils.sheet_to_json(wbRoute.Sheets[wbRoute.SheetNames[0]], {header: 1});
-            
-            processRawExcelData(jsonRoute);
-            
-            loadStatus.route = 'done'; renderStatusBadge('statusRoute', loadStatus.route);
-            updateFilters();
-        } catch (err) {
-            console.error(err); loadStatus.route = 'error'; renderStatusBadge('statusRoute', loadStatus.route); alert("Lỗi tải dữ liệu.");
-        } finally { btn.disabled = false; }
-    }
-
-    async function handleLocalFileUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        loadStatus.route = 'loading'; renderStatusBadge('statusRoute', loadStatus.route);
-        
-        await loadSalesData(); 
-        
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            try {
-                let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, {type: 'array'});
-                let jsonRoute = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-
-                processRawExcelData(jsonRoute);
-                loadStatus.route = 'done'; renderStatusBadge('statusRoute', loadStatus.route);
-                
-                selArea.disabled = true; selNPP.disabled = true; selNV.disabled = true;
-                selArea.innerHTML = `<option>-- Dữ liệu Local --</option>`;
-                selNPP.innerHTML = `<option>-- Dữ liệu Local --</option>`;
-                selNV.innerHTML = `<option>-- Dữ liệu Local --</option>`;
-                
-                currentNVDataOriginal = [...allValidData];
-                normalizeOrder(currentNVDataOriginal);
-
-                let thus = [...new Set(currentNVDataOriginal.map(r => r.thu))].filter(Boolean);
-                let chipsHTML = `<div class="day-chip active" id="chip-all" onclick="toggleAllDays()">Tất cả</div>`;
-                thus.forEach(thu => { chipsHTML += `<div class="day-chip chip-day active" data-day="${thu}" onclick="toggleDay('${thu}')">${thu}</div>`; });
-                document.getElementById('day-chips-container').innerHTML = chipsHTML;
-                
-                selectedDays = thus;
-                
-                currentNVDataOptimized = []; hasOptimizedData = false; isOptimizedView = false;
-                toggleToolbar.style.display = 'flex';
-                let originalRadio = document.querySelector('input[name="routeType"][value="original"]');
-                if(originalRadio) originalRadio.checked = true;
-                
-                document.getElementById('chk-draw-lines').checked = false;
-                window.isFirstMapRender = true; 
-
-                if (allWarningData.length > 0) {
-                    let tbody = document.getElementById('warning-body'); tbody.innerHTML = '';
-                    allWarningData.forEach(row => {
-                        let tagsHTML = row.errors.map(err => `<span class="warning-tag">⚠️ ${err}</span>`).join('');
-                        tbody.innerHTML += `<tr><td style="font-weight:bold; color:#dc2626;">${row.ma_kh}</td><td style="white-space: normal;">${row.ten_kh}</td><td style="white-space: normal;">${tagsHTML}</td></tr>`;
-                    });
-                    warningSection.style.display = 'block';
-                } else {
-                    warningSection.style.display = 'none';
-                }
-
-                btnDlMapWeek.disabled = false; btnOptimize.disabled = false;
-                processDataAndRender();
-
-            } catch (err) {
-                console.error(err); loadStatus.route = 'error'; renderStatusBadge('statusRoute', loadStatus.route); alert("Lỗi đọc file Excel.");
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function updateFilters() {
-        let allData = [...allValidData, ...allWarningData];
-        let areas = [...new Set(allData.map(r => r.area))].filter(Boolean).sort();
-        selArea.innerHTML = `<option value="">-- Chọn Khu vực --</option>`;
-        areas.forEach(a => selArea.innerHTML += `<option value="${a}">${a}</option>`);
-        selArea.disabled = false;
-        
-        selNPP.innerHTML = `<option value="">-- Chọn NPP --</option>`; selNPP.disabled = true;
-        selNV.innerHTML = `<option value="">-- Chọn Nhân viên --</option>`; selNV.disabled = true;
-        clearDayChips();
-    }
-
-    function clearNVData() {
-        dashboard.style.display = 'none';
-        warningSection.style.display = 'none';
-        currentNVDataOriginal = []; currentNVDataOptimized = [];
-        hasOptimizedData = false; isOptimizedView = false;
-        toggleToolbar.style.display = 'none';
-        document.getElementById('chk-draw-lines').checked = false;
-        let originalRadio = document.querySelector('input[name="routeType"][value="original"]');
-        if(originalRadio) originalRadio.checked = true;
-    }
-
-    function clearDayChips() {
-        selectedDays = [];
-        document.getElementById('day-chips-container').innerHTML = `<span style="color:#94a3b8; font-size: 13px;">-- Chọn Thứ --</span>`;
-    }
-
-    selArea.addEventListener('change', () => {
-        clearNVData();
-        const area = selArea.value;
-        if (!area) {
-            selNPP.innerHTML = `<option value="">-- Chọn NPP --</option>`; selNPP.disabled = true;
-            selNV.innerHTML = `<option value="">-- Chọn Nhân viên --</option>`; selNV.disabled = true;
-            clearDayChips(); return;
-        }
-        let allData = [...allValidData, ...allWarningData];
-        let npps = [...new Set(allData.filter(r => r.area === area).map(r => r.npp))].filter(Boolean).sort();
-        selNPP.innerHTML = `<option value="">-- Chọn NPP --</option>`;
-        npps.forEach(npp => selNPP.innerHTML += `<option value="${npp}">${npp}</option>`);
-        selNPP.disabled = false;
-        selNV.innerHTML = `<option value="">-- Chọn Nhân viên --</option>`; selNV.disabled = true;
-        clearDayChips();
-    });
-
-    selNPP.addEventListener('change', () => {
-        clearNVData(); 
-        const area = selArea.value; const npp = selNPP.value;
-        if (!npp) { selNV.disabled = true; clearDayChips(); return; }
-        let allData = [...allValidData, ...allWarningData];
-        let nvs = [...new Set(allData.filter(r => r.area === area && r.npp === npp).map(r => r.nv))].filter(Boolean).sort();
-        selNV.innerHTML = `<option value="">-- Chọn Nhân viên --</option>`;
-        nvs.forEach(nv => selNV.innerHTML += `<option value="${nv}">${nv}</option>`);
-        selNV.disabled = false;
-        clearDayChips();
-    });
-
-    selNV.addEventListener('change', () => {
-        clearNVData(); 
-        const area = selArea.value; const npp = selNPP.value; const nv = selNV.value; 
-        if (!nv) { clearDayChips(); return; }
-        
-        let myWarning = allWarningData.filter(r => r.area === area && r.npp === npp && r.nv === nv);
-        if (myWarning.length > 0) {
-            let tbody = document.getElementById('warning-body'); tbody.innerHTML = '';
-            myWarning.forEach(row => {
-                let tagsHTML = row.errors.map(err => `<span class="warning-tag">⚠️ ${err}</span>`).join('');
-                tbody.innerHTML += `<tr><td style="font-weight:bold; color:#dc2626;">${row.ma_kh}</td><td style="white-space: normal;">${row.ten_kh}</td><td style="white-space: normal;">${tagsHTML}</td></tr>`;
-            });
-            warningSection.style.display = 'block';
-        }
-
-        currentNVDataOriginal = allValidData.filter(r => r.area === area && r.npp === npp && r.nv === nv);
-        
-        normalizeOrder(currentNVDataOriginal);
-        
-        let thus = [...new Set(currentNVDataOriginal.map(r => r.thu))].filter(Boolean);
-        let chipsHTML = `<div class="day-chip" id="chip-all" onclick="toggleAllDays()">Tất cả</div>`;
-        thus.forEach(thu => { chipsHTML += `<div class="day-chip chip-day" data-day="${thu}" onclick="toggleDay('${thu}')">${thu}</div>`; });
-        document.getElementById('day-chips-container').innerHTML = chipsHTML;
-        
-        window.isFirstMapRender = true;
-    });
-
-    window.toggleDay = function(day) {
-        let idx = selectedDays.indexOf(day);
-        if(idx > -1) selectedDays.splice(idx, 1); else selectedDays.push(day);
-        updateDaySelection();
-    };
-
-    window.toggleAllDays = function() {
-        let chipElements = Array.from(document.querySelectorAll('.chip-day'));
-        if(selectedDays.length === chipElements.length) selectedDays = []; 
-        else selectedDays = chipElements.map(el => el.getAttribute('data-day'));
-        updateDaySelection();
-    };
-
-    function updateDaySelection() {
-        document.querySelectorAll('.chip-day').forEach(el => {
-            if(selectedDays.includes(el.getAttribute('data-day'))) el.classList.add('active');
-            else el.classList.remove('active');
-        });
-        
-        let chipAll = document.getElementById('chip-all');
-        if(chipAll) {
-            let totalDays = document.querySelectorAll('.chip-day').length;
-            if(selectedDays.length === totalDays && totalDays > 0) chipAll.classList.add('active');
-            else chipAll.classList.remove('active');
-        }
-
-        btnDlMapWeek.disabled = (selectedDays.length === 0);
-        btnOptimize.disabled = (selectedDays.length === 0);
-
-        if (selectedDays.length > 0) {
-            window.isFirstMapRender = true; 
-            processDataAndRender();
-        }
-        else { dashboard.style.display = 'none'; routeLayer.clearLayers(); lineLayer.clearLayers(); window.currentMarkers = {}; }
-    }
-
-    function ensureEditMode() {
-        if (!hasOptimizedData) {
-            currentNVDataOptimized = currentNVDataOriginal.map(r => ({...r}));
-            hasOptimizedData = true;
-        }
-        if (!isOptimizedView) {
-            isOptimizedView = true;
-            document.querySelector('input[name="routeType"][value="optimized"]').checked = true;
-            toggleToolbar.style.display = 'flex';
-        }
-    }
-
-    window.editOrder = function(ma_kh, inputVal) {
-        ensureEditMode();
-        let newOrder = parseInt(inputVal);
-        if(isNaN(newOrder)) newOrder = 999;
-        
-        currentNVDataOptimized.forEach(r => {
-            if(r.ma_kh === ma_kh) r._ai_order = newOrder; 
-        });
-        
-        normalizeOrder(currentNVDataOptimized); 
-        processDataAndRender(); 
-    };
-
-    window.toggleRouteDay = function(ma_kh, day) {
-        ensureEditMode();
-        let existingIndex = currentNVDataOptimized.findIndex(r => r.ma_kh === ma_kh && r.thu === day);
-        if (existingIndex > -1) {
-            currentNVDataOptimized.splice(existingIndex, 1);
-        } else {
-            let template = currentNVDataOptimized.find(r => r.ma_kh === ma_kh) || currentNVDataOriginal.find(r => r.ma_kh === ma_kh);
-            if (template) {
-                currentNVDataOptimized.push({...template, thu: day});
-            }
-        }
-        normalizeOrder(currentNVDataOptimized);
-        processDataAndRender();
-    };
-
-    window.toggleFrequency = function(ma_kh, week) {
-        ensureEditMode();
-        let template = currentNVDataOptimized.find(r => r.ma_kh === ma_kh);
-        if(!template) return;
-        let currentFreq = template.freq;
-        
-        let w13 = ['F4', 'F2-1'].includes(currentFreq); 
-        let w24 = ['F4', 'F2-2'].includes(currentFreq); 
-
-        if (week === 'W1' || week === 'W3') { w13 = !w13; } 
-        else if (week === 'W2' || week === 'W4') { w24 = !w24; }
-
-        if (!w13 && !w24) {
-            if (week === 'W1' || week === 'W3') w24 = true;
-            else w13 = true;
-        }
-
-        let newFreq = (w13 && w24) ? 'F4' : (w13 ? 'F2-1' : 'F2-2');
-
-        currentNVDataOptimized.forEach(r => {
-            if(r.ma_kh === ma_kh) r.freq = newFreq;
-        });
-        
-        normalizeOrder(currentNVDataOptimized);
-        processDataAndRender();
-    };
-
-    async function processDataAndRender() {
-        if (selectedDays.length === 0 || currentNVDataOriginal.length === 0) { dashboard.style.display = 'none'; return; }
-        dashboard.style.display = 'none';
-
-        let baseData = isOptimizedView ? currentNVDataOptimized : currentNVDataOriginal;
-        let activeData = baseData.filter(r => selectedDays.includes(r.thu));
-
-        renderMapOptimized(activeData);
-        renderComparisonTable();
-        renderDetailTable(activeData);
-        
-        document.getElementById('ai-chat-section').style.display = hasOptimizedData ? 'block' : 'none';
-        dashboard.style.display = 'block';
-    }
-
-    function renderMapOptimized(data) {
-        let seenIds = new Set();
-        lineLayer.clearLayers(); 
-        let allLatLngs = [];
-
-        const dayOrder = {"Thứ 2":2,"Thứ 3":3,"Thứ 4":4,"Thứ 5":5,"Thứ 6":6,"Thứ 7":7,"Chủ nhật":8};
-        let uniqueDays = [...new Set(data.map(r => r.thu))].sort((a,b) => dayOrder[a] - dayOrder[b]);
-
-        for (let day of uniqueDays) {
-            let dayData = data.filter(r => r.thu === day);
-            let hasF21 = dayData.some(r => r.freq === 'F2-1');
-            let hasF22 = dayData.some(r => r.freq === 'F2-2');
-            let p = palettes[day] || palettes['Thứ 2'];
-
-            const processGroup = (groupData, shape, bgColor, textColor, lineDash) => {
-                if (groupData.length === 0) return;
-                let coords = [];
-                for (let i = 0; i < groupData.length; i++) {
-                    let row = groupData[i];
-                    coords.push([row.lat, row.lng]);
-                    allLatLngs.push([row.lat, row.lng]);
-                    
-                    let stt = row._ai_order; 
-
-                    let iconHtml = '';
-                    if (shape === 'marker-triangle') {
-                        iconHtml = `
-                        <div style="position:relative; width: 34px; height: 34px; display:flex; align-items:center; justify-content:center; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));">
-                            <svg width="34" height="34" viewBox="0 0 24 24" style="position:absolute; top:0; left:0; z-index: 1;">
-                                <path fill="${bgColor}" stroke="white" stroke-width="1.5" stroke-linejoin="round" d="M12 2 L22 21 L2 21 Z"/>
-                            </svg>
-                            <span style="position:relative; z-index: 2; color:${textColor}; font-size:12px; font-weight:bold; margin-top: 6px;">${stt}</span>
-                        </div>`;
-                    } else {
-                        iconHtml = `<div class="route-marker ${shape}" style="background-color: ${bgColor}; color: ${textColor};">${stt}</div>`;
-                    }
-
-                    let icon = L.divIcon({ className: 'custom-div-icon', html: iconHtml, iconSize: [34, 34], iconAnchor: [17, 17] });
-                    let markerId = row.ma_kh + '_' + day; 
-                    seenIds.add(markerId);
-
-                    let popupHtml = `
-                        <div style="font-size: 13px; line-height: 1.5; min-width: 180px;">
-                            <b style="color:#1e40af; font-size:14px; text-transform: uppercase;">${row.ten_kh || 'N/A'}</b><br>
-                            <b style="color:#ef4444;">Mã KH:</b> ${row.ma_kh}<br>
-                            <b style="color:#10b981;">Địa chỉ:</b> ${row.dia_chi}<br>
-                            <hr style="margin: 5px 0; border: 0; border-top: 1px solid #e2e8f0;">
-                            <b>Tần suất:</b> ${row.freq}
-                        </div>
-                    `;
-
-                    if (window.currentMarkers[markerId]) {
-                        let m = window.currentMarkers[markerId];
-                        m.setIcon(icon);
-                        m.setPopupContent(popupHtml);
-                    } else {
-                        let m = L.marker([row.lat, row.lng], {icon: icon});
-                        m.bindPopup(popupHtml, { autoPan: false });
-                        routeLayer.addLayer(m);
-                        window.currentMarkers[markerId] = m;
-                    }
-                }
-
-                let chkLines = document.getElementById('chk-draw-lines');
-                if (coords.length > 1 && chkLines && chkLines.checked) {
-                    L.polyline(coords, { color: bgColor, weight: 3, opacity: 0.9, dashArray: lineDash }).addTo(lineLayer);
-                }
-            };
-
-            if (hasF21 || hasF22) {
-                let routeW13 = dayData.filter(r => r.freq === 'F4' || r.freq === 'F2-1');
-                let routeW24 = dayData.filter(r => r.freq === 'F4' || r.freq === 'F2-2');
-
-                let shape13 = (routeW13.some(r=>r.freq==='F4') && routeW13.some(r=>r.freq==='F2-1')) ? 'marker-triangle' : (routeW13.some(r=>r.freq==='F2-1') ? 'marker-square' : 'marker-circle');
-                let shape24 = (routeW24.some(r=>r.freq==='F4') && routeW24.some(r=>r.freq==='F2-2')) ? 'marker-triangle' : (routeW24.some(r=>r.freq==='F2-2') ? 'marker-square' : 'marker-circle');
-
-                processGroup(routeW13, shape13, p.base, '#ffffff', isOptimizedView ? '' : '5, 5');
-                processGroup(routeW24, shape24, p.light, p.textLight, isOptimizedView ? '8, 4' : '2, 6');
-            } else {
-                processGroup(dayData, 'marker-circle', p.base, '#ffffff', isOptimizedView ? '' : '5, 5');
-            }
-        }
-
-        for (let id in window.currentMarkers) {
-            if (!seenIds.has(id)) {
-                routeLayer.removeLayer(window.currentMarkers[id]);
-                delete window.currentMarkers[id];
-            }
-        }
-
-        if (window.isFirstMapRender && allLatLngs.length > 0) {
-            map.fitBounds(L.latLngBounds(allLatLngs), {padding: [30, 30]});
-            window.isFirstMapRender = false;
-        }
-    }
-
-    window.highlightMarker = function(ma_kh) {
-        for(let id in window.currentMarkers) {
-            if (id.startsWith(ma_kh + "_")) {
-                window.currentMarkers[id].openPopup();
-            }
-        }
-    };
-
-    window.resetHighlightMarker = function(ma_kh) {
-        for(let id in window.currentMarkers) {
-            if (id.startsWith(ma_kh + "_")) {
-                window.currentMarkers[id].closePopup();
-            }
-        }
-    };
-
-    function getRouteStatsForGroup(groupData) {
-        let dist = 0;
-        if (!groupData || groupData.length === 0) return { count: 0, dist: 0 };
-        for(let i = 0; i < groupData.length - 1; i++) {
-            dist += getHaversine14(groupData[i].lat, groupData[i].lng, groupData[i+1].lat, groupData[i+1].lng);
-        }
-        return { count: groupData.length, dist: dist };
-    }
-
-    function renderComparisonTable() {
-        const thead = document.getElementById('comp-head'); 
-        const tbody = document.getElementById('comp-body'); 
-        const tfoot = document.getElementById('comp-foot');
-        
-        thead.innerHTML = `<tr>
-            <th class="route-th">Thứ</th>
-            <th class="route-th">Nhóm Tuyến</th>
-            <th class="route-th">Khách (Gốc)</th>
-            <th class="route-th">Khách (Mới)</th>
-            <th class="route-th num-right">Km (Mới)</th>
-        </tr>`;
-        tbody.innerHTML = '';
-        let tOldCount=0, tNewCount=0, tNewDist=0;
-
-        selectedDays.forEach(day => {
-            let origDayData = currentNVDataOriginal.filter(r => r.thu === day);
-            let optDayData = hasOptimizedData ? currentNVDataOptimized.filter(r => r.thu === day) : [];
-
-            let hasF21 = origDayData.some(r => r.freq === 'F2-1') || optDayData.some(r => r.freq === 'F2-1');
-            let hasF22 = origDayData.some(r => r.freq === 'F2-2') || optDayData.some(r => r.freq === 'F2-2');
-
-            const groups = [];
-            if (hasF21 || hasF22) {
-                groups.push({ label: "Tuần 1 & 3", orig: origDayData.filter(r => r.freq === 'F4' || r.freq === 'F2-1'), opt: optDayData.filter(r => r.freq === 'F4' || r.freq === 'F2-1') });
-                groups.push({ label: "Tuần 2 & 4", orig: origDayData.filter(r => r.freq === 'F4' || r.freq === 'F2-2'), opt: optDayData.filter(r => r.freq === 'F4' || r.freq === 'F2-2') });
-            } else {
-                groups.push({ label: "Mỗi Tuần", orig: origDayData, opt: optDayData });
-            }
-
-            groups.forEach(g => {
-                let oldStats = getRouteStatsForGroup(g.orig);
-                let newStats = hasOptimizedData ? getRouteStatsForGroup(g.opt) : { count: 0, dist: 0 };
-                
-                if (oldStats.count === 0 && newStats.count === 0) return;
-
-                tOldCount += oldStats.count; 
-                if (hasOptimizedData) tNewCount += newStats.count; 
-                if (hasOptimizedData) tNewDist += newStats.dist;
-
-                tbody.innerHTML += `<tr>
-                    <td style="font-weight:bold; color: ${palettes[day].base}; text-align: center;">${day}</td>
-                    <td style="text-align:center; font-weight:bold; color:#0f766e; background:#f0fdfa;">${g.label}</td>
-                    <td style="text-align:center;">${oldStats.count}</td>
-                    <td style="text-align:center; font-weight:bold; color:#f59e0b;">${hasOptimizedData ? newStats.count : '--'}</td>
-                    <td class="num-right" style="color:#f59e0b; font-weight:bold;">${hasOptimizedData ? formatNum(newStats.dist) : '--'}</td>
-                </tr>`;
-            });
-        });
-        
-        tfoot.innerHTML = `<tr>
-            <td colspan="2" style="font-weight:bold; text-align:right;">TỔNG CÁC NHÓM</td>
-            <td style="text-align:center; font-weight:bold;">${tOldCount}</td>
-            <td style="text-align:center; font-weight:bold; color:#f59e0b;">${hasOptimizedData ? tNewCount : '--'}</td>
-            <td class="num-right" style="color:#f59e0b; font-weight:bold;">${hasOptimizedData ? formatNum(tNewDist) + ' km' : '--'}</td>
-        </tr>`;
-    }
-
-    function renderDetailTable(data) {
-        const thead = document.getElementById('table-head'); 
-        const tbody = document.getElementById('table-body');
-        const tfoot = document.getElementById('table-foot');
-
-        // BỔ SUNG CỘT DOANH SỐ ĐƯỢC ĐỔI TÊN THÀNH MAY, JUN, JUL
-        thead.innerHTML = `
-        <tr>
-            <th class="route-th" rowspan="2" style="z-index: 3;">STT</th>
-            <th class="route-th" rowspan="2" style="z-index: 3;">Mã KH</th>
-            <th class="route-th" rowspan="2" style="z-index: 3;">Tên KH</th>
-            <th class="route-th ds-col" colspan="3" style="z-index: 3;">Doanh Số (đ)</th>
-            <th class="route-th" colspan="7" style="z-index: 3;">Lộ trình</th>
-            <th class="route-th" colspan="4" style="z-index: 3;">Tần Suất</th>
-        </tr>
-        <tr>
-            <th class="route-th ds-col" style="width: 70px; top: 36px; z-index: 2;">May</th>
-            <th class="route-th ds-col" style="width: 70px; top: 36px; z-index: 2;">Jun</th>
-            <th class="route-th ds-col" style="width: 70px; top: 36px; z-index: 2;">Jul</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 2</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 3</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 4</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 5</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 6</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">Thứ 7</th>
-            <th class="route-th" style="width: 50px; top: 36px; z-index: 2;">CN</th>
-            <th class="route-th" style="width: 40px; top: 36px; z-index: 2;">W1</th>
-            <th class="route-th" style="width: 40px; top: 36px; z-index: 2;">W2</th>
-            <th class="route-th" style="width: 40px; top: 36px; z-index: 2;">W3</th>
-            <th class="route-th" style="width: 40px; top: 36px; z-index: 2;">W4</th>
-        </tr>`;
-        
-        tbody.innerHTML = ''; tfoot.innerHTML = '';
-
-        let customerMap = new Map();
-        let uniqueCustomers = [];
-        const dayOrderRules = {"Thứ 2":2,"Thứ 3":3,"Thứ 4":4,"Thứ 5":5,"Thứ 6":6,"Thứ 7":7,"Chủ nhật":8};
-
-        data.forEach(row => {
-            if (!customerMap.has(row.ma_kh)) {
-                let custInfo = {
-                    ma_kh: row.ma_kh, ten_kh: row.ten_kh, freq: row.freq,
-                    days: new Set()
-                };
-                customerMap.set(row.ma_kh, custInfo);
-                uniqueCustomers.push(custInfo);
-            }
-            customerMap.get(row.ma_kh).days.add(row.thu);
-        });
-
-        const freqOrderRules = {"F4": 1, "F2-1": 2, "F2-2": 3};
-
-        uniqueCustomers.sort((a, b) => {
-            let minDayA = Math.min(...Array.from(a.days).map(d => dayOrderRules[d] || 99));
-            let minDayB = Math.min(...Array.from(b.days).map(d => dayOrderRules[d] || 99));
-            if (minDayA !== minDayB) return minDayA - minDayB;
-            
-            let getEarliestOrder = (kh, minDay) => {
-                let r = data.find(x => x.ma_kh === kh && (dayOrderRules[x.thu] || 99) === minDay);
-                return r ? r._ai_order : 999;
-            };
-            
-            let orderA = getEarliestOrder(a.ma_kh, minDayA);
-            let orderB = getEarliestOrder(b.ma_kh, minDayB);
-
-            let orderDiff = orderA - orderB;
-            if(orderDiff !== 0) return orderDiff;
-
-            return (freqOrderRules[a.freq] || 99) - (freqOrderRules[b.freq] || 99);
-        });
-
-        uniqueCustomers.forEach((cust, index) => {
-            const getX = (day) => cust.days.has(day) ? `<span style="color:#dc2626; font-weight:900; font-size:14px;">x</span>` : ``;
-            const getW = (hasW) => hasW ? `<span style="color:#1e40af; font-weight:900; font-size:14px;">x</span>` : ``;
-            
-            const isF4 = cust.freq === 'F4';
-            const isF21 = cust.freq === 'F2-1';
-            const isF22 = cust.freq === 'F2-2';
-            
-            let minDayNum = Math.min(...Array.from(cust.days).map(d => dayOrderRules[d] || 99));
-            let firstRecord = data.find(r => r.ma_kh === cust.ma_kh && (dayOrderRules[r.thu]||99) === minDayNum);
-            let valSTT = firstRecord ? firstRecord._ai_order : 999;
-
-            let dsKH = window.salesDataMap[cust.ma_kh] || {};
-            let dsM5 = formatNum(dsKH['M5'] || 0);
-            let dsM6 = formatNum(dsKH['M6'] || 0);
-            let dsM7 = formatNum(dsKH['M7'] || 0);
-
-            tbody.innerHTML += `<tr class="hover-row" onmouseenter="highlightMarker('${cust.ma_kh}')" onmouseleave="resetHighlightMarker('${cust.ma_kh}')">
-                <td style="text-align:center;">
-                    <input type="number" class="stt-input" value="${valSTT}" onchange="editOrder('${cust.ma_kh}', this.value)">
-                </td>
-                <td style="font-weight:600;">${cust.ma_kh}</td>
-                <td style="white-space: normal;">${cust.ten_kh}</td>
-                
-                <td class="num-right" style="background:#fffbeb;">${dsM5 !== '0.00' ? dsM5 : '-'}</td>
-                <td class="num-right" style="background:#fef3c7;">${dsM6 !== '0.00' ? dsM6 : '-'}</td>
-                <td class="num-right" style="background:#fffbeb;">${dsM7 !== '0.00' ? dsM7 : '-'}</td>
-
-                <td class="edit-cell" style="text-align:center; background:#f8fafc;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 2')">${getX('Thứ 2')}</td>
-                <td class="edit-cell" style="text-align:center; background:#fff;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 3')">${getX('Thứ 3')}</td>
-                <td class="edit-cell" style="text-align:center; background:#f8fafc;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 4')">${getX('Thứ 4')}</td>
-                <td class="edit-cell" style="text-align:center; background:#fff;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 5')">${getX('Thứ 5')}</td>
-                <td class="edit-cell" style="text-align:center; background:#f8fafc;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 6')">${getX('Thứ 6')}</td>
-                <td class="edit-cell" style="text-align:center; background:#fff;" onclick="toggleRouteDay('${cust.ma_kh}', 'Thứ 7')">${getX('Thứ 7')}</td>
-                <td class="edit-cell" style="text-align:center; background:#fef2f2;" onclick="toggleRouteDay('${cust.ma_kh}', 'Chủ nhật')">${getX('Chủ nhật')}</td>
-                
-                <td class="edit-cell" style="text-align:center; background:#f0fdfa;" onclick="toggleFrequency('${cust.ma_kh}', 'W1')">${getW(isF4 || isF21)}</td>
-                <td class="edit-cell" style="text-align:center; background:#f0fdfa;" onclick="toggleFrequency('${cust.ma_kh}', 'W2')">${getW(isF4 || isF22)}</td>
-                <td class="edit-cell" style="text-align:center; background:#f0fdfa;" onclick="toggleFrequency('${cust.ma_kh}', 'W3')">${getW(isF4 || isF21)}</td>
-                <td class="edit-cell" style="text-align:center; background:#f0fdfa;" onclick="toggleFrequency('${cust.ma_kh}', 'W4')">${getW(isF4 || isF22)}</td>
-            </tr>`;
-        });
-    }
-
-    async function optimizeRouteWithAI() {
-        const passcode = prompt("Vui lòng nhập mật khẩu để sử dụng tính năng AI:");
-        if (passcode !== "admin!2345@") return alert("Mật khẩu không đúng! Không thể chạy AI.");
-        
-        let dataToOptimize = currentNVDataOriginal.filter(r => selectedDays.includes(r.thu));
-        if (dataToOptimize.length < 3) return alert("Quá ít khách hàng, không cần AI tối ưu.");
-        btnOptimize.innerText = "⌛ AI Đang Tính Toán..."; btnOptimize.disabled = true;
-        try {
-            const payload = dataToOptimize.map(row => ({ id: row.ma_kh, lat: row.lat, lng: row.lng }));
-            const response = await fetch('https://tool-toi-uu-tuyen.vercel.app/api/optimizeRoute', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ locations: payload, availableDays: selectedDays })
-            });
-            if (response.status === 503) throw new Error("AI đang quá tải, vui lòng thử lại sau!");
-            if (!response.ok) throw new Error("Lỗi xử lý từ AI");
-
-            const data = await response.json(); const aiResults = data.optimized_data;
-            currentNVDataOptimized = currentNVDataOriginal.map(row => {
-                let newRow = {...row};
-                if (selectedDays.includes(row.thu)) {
-                    let ai = aiResults.find(i => i.id === row.ma_kh);
-                    if (ai) { newRow.thu = ai.day; newRow._ai_order = ai.order; }
-                }
-                return newRow;
-            });
-            
-            normalizeOrder(currentNVDataOptimized);
-            
-            hasOptimizedData = true; toggleToolbar.style.display = 'flex';
-            document.querySelector('input[name="routeType"][value="optimized"]').checked = true;
-            isOptimizedView = true; 
-            
-            document.getElementById('chk-draw-lines').checked = true;
-            window.isFirstMapRender = true;
-            await processDataAndRender();
-        } catch (error) { alert("⚠️ " + error.message); } 
-        finally { btnOptimize.innerText = "✨ AI Tối Ưu Tuyến"; btnOptimize.disabled = false; }
-    }
-
-    async function sendCustomRequestToAI() {
-        const inputEl = document.getElementById('ai-chat-input');
-        const userCommand = inputEl.value.trim(); const btn = document.getElementById('btn-send-ai-chat');
-        if (!userCommand) return alert("Vui lòng nhập yêu cầu!");
-        btn.innerText = "⌛ Đang xử lý..."; btn.disabled = true;
-        try {
-            const response = await fetch('https://tool-toi-uu-tuyen.vercel.app/api/modifyRoute', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    currentData: currentNVDataOptimized.map(r => ({ id: r.ma_kh, day: r.thu, lat: r.lat, lng: r.lng })),
-                    command: userCommand, availableDays: selectedDays
-                })
-            });
-            if (response.status === 503) throw new Error("AI đang quá tải, thử lại sau!");
-            if (!response.ok) throw new Error("Lỗi AI tinh chỉnh");
-
-            const data = await response.json(); const aiResults = data.modified_data;
-            currentNVDataOptimized = currentNVDataOptimized.map(row => {
-                let newRow = {...row}; let match = aiResults.find(i => i.id === row.ma_kh);
-                if (match) { newRow.thu = match.day; newRow._ai_order = match.order; }
-                return newRow;
-            });
-            
-            normalizeOrder(currentNVDataOptimized);
-            
-            window.isFirstMapRender = true;
-            await processDataAndRender(); inputEl.value = ""; 
-        } catch (error) { alert("⚠️ " + error.message); } 
-        finally { btn.innerText = "🚀 Gửi yêu cầu"; btn.disabled = false; }
-    }
-
-    function handleRouteToggle() {
-        isOptimizedView = (document.querySelector('input[name="routeType"]:checked').value === 'optimized');
-        window.isFirstMapRender = true;
-        processDataAndRender();
-    }
-    
-    function exportDetailToExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("detail-table"), {sheet: "Route"}), `Route_Export.xlsx`); }
-    function downloadWeeklyMap() { html2canvas(document.getElementById('map'), { useCORS: true, allowTaint: false, scale: 2 }).then(canvas => { let link = document.createElement('a'); link.download = `Map_Export.png`; link.href = canvas.toDataURL('image/png'); link.click(); }); }
-    function getHaversine14(lat1, lon1, lat2, lon2) {
-        if(isNaN(lat1)||isNaN(lon1)||isNaN(lat2)||isNaN(lon2)) return 0;
-        const dLat = (lat2 - lat1)*(Math.PI/180); const dLon = (lon2 - lon1)*(Math.PI/180);
-        const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180))*Math.sin(dLon/2)*Math.sin(dLon/2);
-        return (6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))) * 1.4; 
-    }
-    function formatNum(num) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num || 0); }
+Chart.defaults.color = '#A0AAB5';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+const dict = {
+    vi: {
+        mainTitle: "RTM STRATEGIC DASHBOARD", subTitle: "Đánh giá Hiệu quả Phân phối, Thực thi Tuyến & Phân khúc Sức mua",
+        lblMonth: "Tháng", lblWeek: "Tuần", lblRegion: "Miền", lblArea: "Khu vực", lblAll: "Tất cả",
+        secPulse: "TỔNG QUAN CHUNG", kpiSalesLbl: "TỔNG SELL-OUT & KH LÊN ĐƠN", kpiSalesSub1: "VNĐ (Chưa VAT)", kpiSalesSub2: "Dòng tiền",
+        kpiStrikeLbl: "TỶ LỆ CHỐT ĐƠN", kpiStrikeSub: "Độ bao phủ",
+        kpiDropF4Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F4)", kpiDropF2Lbl: "GIÁ TRỊ TRUNG BÌNH/ĐƠN HÀNG (KH tuyến F2)",
+        treeTitle: "DANH MỤC NHÂN SỰ",
+        lblFreq: "Tần suất lên đơn", lblLppc: "SKU TB/Đơn",
+        kpiKaeLbl: "KAE ĐANG HOẠT ĐỘNG", kpiDsrLbl: "DSR ĐANG HOẠT ĐỘNG",
+        kpiAvgKaeLbl: "Doanh số bình quân mỗi KAE/ tháng", kpiAvgDsrLbl: "Doanh số bình quân mỗi DSR/ tháng",
+        secP1: "PHẦN 1: TỔNG QUAN THEO KHU VỰC", cAreaTitle: "HIỆU QUẢ SELL-OUT THEO KHU VỰC", cAreaSub: "⚠️ Cảnh báo vùng có Tỷ lệ khách hàng lên đơn dưới 50%",
+        cWeekTitle: "SELL OUT THEO TUẦN", secP2: "PHẦN 2: THỰC THI TẠI THỊ TRƯỜNG",
+        cKamTitle: "TOP 10 KAM CÓ SELL OUT TỐT NHẤT", cKaeTitle: "TOP 10 KAE CÓ PERFORMANCE TỐT NHẤT",
+        btnExportKae: "Xuất Excel (Tất cả)",
+        secP3: "PHẦN 3: ĐỘ PHỦ & CHIẾN LƯỢC ĐIỂM BÁN", cSegTitle: "PHÂN TÍCH SỨC MUA THEO PHÂN KHÚC TẠP HÓA",
+        cSegSub: "Kèm Box tỷ trọng (%) cơ cấu khách hàng. Bảng tự động gộp Toàn Quốc khi chọn 'Tất cả Khu vực'.",
+        colArea: "KHU VỰC", colWeek: "TUẦN", colKam: "KAM", colKae: "KAE/DSR",
+        tbPlan: "KH trên tuyến", tbActive: "KH lên đơn", tbStrike: "Tỷ lệ chốt đơn", tbSales: "Sell-Out", tbDrop: "Giá trị trung bình/đơn", tbFreq: "Tần suất lên đơn", tbLppc: "SKU TB/Đơn",
+        sysTotal: "TỔNG TOÀN QUỐC", sysTotalSys: "TỔNG HỆ THỐNG",
+        segColClass: "PHÂN KHÚC", segTblH1: "HIỆU SUẤT ĐIỂM BÁN",
+        axisCust: "Đơn vị: Cửa hàng", axisVnd: "Đơn vị: VNĐ", legSales: "Doanh số", legTotal: "KH trên tuyến", legActive: "KH lên đơn"
+    },
+    en: {
+        mainTitle: "RTM STRATEGIC DASHBOARD", subTitle: "Distribution Efficiency, Route Execution & Purchasing Power",
+        lblMonth: "Month", lblWeek: "Week", lblRegion: "Region", lblArea: "Area", lblAll: "All",
+        secPulse: "THE PULSE", kpiSalesLbl: "TOTAL SELL-OUT & ACTIVE OUTLETS", kpiSalesSub1: "VND (Excl. VAT)", kpiSalesSub2: "Volume Flow",
+        kpiStrikeLbl: "Invoicing STRIKE RATE", kpiStrikeSub: "Coverage Strike rate",
+        kpiDropF4Lbl: "AVERAGE VALUE / INVOICE (F4)", kpiDropF2Lbl: "AVERAGE VALUE / INVOICE (F2)", 
+        treeTitle: "HEADCOUNT",
+        lblFreq: "Freq", lblLppc: "LPPC",
+        kpiKaeLbl: "ACTIVE KAE", kpiDsrLbl: "ACTIVE DSR",
+        kpiAvgKaeLbl: "AVG KAE PEFORMANCE/MONTH", kpiAvgDsrLbl: "AVG DSR PEFORMANCE/MONTH",
+        secP1: "PART 1: MACRO OVERVIEW (NATIONWIDE)", cAreaTitle: "SELL-OUT EFFICIENCY BY AREA", cAreaSub: "⚠️ Red flag for regions with Coverage < 50%",
+        cWeekTitle: "WEEKLY SELL-OUT", secP2: "PART 2: IN-MARKET EXECUTION",
+        cKamTitle: "TOP 10 KAM BY SELL-OUT", cKaeTitle: "TOP 10 KAE BY PERFORMANCE",
+        btnExportKae: "Download full list",
+        secP3: "PART 3: COVERAGE & OUTLET STRATEGY", cSegTitle: "PURCHASING POWER BY OUTLET SEGMENTATION",
+        cSegSub: "Includes (%) Proportion Boxes. Auto-groups to Nationwide when 'All Areas' is selected.",
+        colArea: "AREA", colWeek: "WEEK", colKam: "KAM", colKae: "KAE/DSR",
+        tbPlan: "Route", tbActive: "Active", tbStrike: "Strike Rate", tbSales: "Sell-Out", tbDrop: "Value / Invoice", tbFreq: "Freq", tbLppc: "LPPC",
+        sysTotal: "NATIONWIDE TOTAL", sysTotalSys: "SYSTEM TOTAL",
+        segColClass: "CLASS", segTblH1: "OUTLET PERFORMANCE",
+        axisCust: "Unit: Outlets", axisVnd: "Unit: VND", legSales: "Sales", legTotal: "Route", legActive: "Active"
+    }
+};
+
+const segNames = { 'A': 'Class A', 'B': 'Class B', 'C': 'Class C', 'D': 'Class D', 'N': 'Unclassified' };
+const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
+
+let lang = 'vi'; let filters = { month: [], hq: [], area: [] }; let charts = {}; let dbMaster = []; let dbSales = [];
+let fullKaeData = []; // Khởi tạo biến toàn cục chứa toàn bộ data KAE sau lọc
+
+const t = (k) => dict[lang][k] || k;
+const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
+const getW = (d) => String(d.week || d.Week || "").toUpperCase().trim();
+const formatWM = (w, m) => { if (!m) return w; let mNum = monthOrder[m.toLowerCase()] || m; return lang === 'vi' ? `${w} T${mNum}` : `${w} M${mNum}`; };
+
+const cleanName = (name, isKamField = false, areaName = "") => {
+    let cleanStr = String(name || "").replace(/[✔️❌]/g, '').trim();
+    if (isKamField) {
+        cleanStr = cleanStr.toUpperCase(); 
+        if (typeof kamMap !== 'undefined') {
+            let areaKey = String(areaName || "").toUpperCase().trim() + "|" + cleanStr;
+            if (kamMap[areaKey]) return kamMap[areaKey];
+            if (kamMap[cleanStr]) return kamMap[cleanStr];
+        }
+    }
+    return cleanStr;
+};
+
+// ======================== TẦNG UI HOẠT HỌA & BỘ LỌC ========================
+function setLang(newLang) {
+    lang = newLang; 
+    document.getElementById('btn-vi').className = lang === 'vi' ? 'active' : ''; 
+    document.getElementById('btn-en').className = lang === 'en' ? 'active' : '';
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t(el.getAttribute('data-i18n')); });
+    renderFilters(); render();
+}
+
+function toggleMS(id) {
+    let d = document.getElementById('drop-'+id);
+    document.querySelectorAll('.ms-dropdown').forEach(el => { if(el!==d) el.style.display='none'; });
+    d.style.display = d.style.display==='block' ? 'none' : 'block';
+}
+document.addEventListener('click', e => { if(!e.target.closest('.ms-box')) document.querySelectorAll('.ms-dropdown').forEach(d => d.style.display = 'none'); });
+
+function updateF(type, val) {
+    const loader = document.getElementById('loader-wrapper');
+    loader.classList.remove('hidden');
+    setTimeout(() => {
+        if (val === 'all') filters[type] = [];
+        else {
+            let idx = filters[type].indexOf(val);
+            if (idx > -1) filters[type].splice(idx, 1);
+            else filters[type].push(val);
+        }
+        renderFilters(); render();
+        loader.classList.add('hidden');
+    }, 50);
+}
+
+function populateDropdown(id, type, optionsArr) {
+    let drop = document.getElementById('drop-' + id); let lbl = document.getElementById('lbl-' + id);
+    if (filters[type].length === 0) lbl.innerText = t('lblAll');
+    else if (filters[type].length === 1) lbl.innerText = filters[type][0];
+    else lbl.innerText = filters[type].length + ' selected';
+    let htmlStr = `<div class="ms-opt ${filters[type].length === 0 ? 'selected' : ''}" onclick="updateF('${type}', 'all')">${t('lblAll')}</div>`;
+    optionsArr.forEach(opt => { htmlStr += `<div class="ms-opt ${filters[type].includes(opt) ? 'selected' : ''}" onclick="updateF('${type}', '${opt}')">${opt}</div>`; });
+    drop.innerHTML = htmlStr;
+}
+
+function renderFilters() {
+    let all = [...dbMaster, ...dbSales];
+    populateDropdown('month', 'month', [...new Set(all.map(d => d.month))].filter(Boolean).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99)));
+    populateDropdown('hq', 'hq', [...new Set(all.map(d=>d.hq))].filter(Boolean).sort());
+    populateDropdown('area', 'area', [...new Set(all.filter(d => filters.hq.length === 0 || filters.hq.includes(d.hq)).map(d=>d.area))].filter(Boolean).sort());
+}
+
+const getMoMHtml = (curVal, prevVal) => {
+    if (prevVal === 0 && curVal === 0) return `<span style="color:var(--text-muted)">- 0% so với tháng trước</span>`;
+    if (prevVal === 0) return `<span style="color:var(--accent-success)">▲ 100% so với tháng trước</span>`;
+    let pct = ((curVal - prevVal) / prevVal) * 100;
+    let color = pct > 0 ? 'var(--accent-success)' : (pct < 0 ? 'var(--accent-danger)' : 'var(--text-muted)');
+    let sign = pct > 0 ? '▲' : (pct < 0 ? '▼' : '-');
+    return `<span><span style="color:${color}; font-weight: 800; font-size:12px;">${sign} ${Math.abs(pct).toFixed(1)}%</span> <span style="color:var(--text-muted)">so với tháng trước</span></span>`;
+};
+
+// ======================== DUAL-FILTER ENGINE XỬ LÝ ========================
+function render() {
+    if (dbMaster.length === 0 && dbSales.length === 0) return; 
+
+    let weekSubText = filters.area.length > 0 ? filters.area.join(', ') : (lang === 'vi' ? 'Tất cả khu vực' : 'All Areas');
+    document.getElementById('weekChartSub').innerText = (lang === 'vi' ? 'Khu vực đang xem: ' : 'Filtered Areas: ') + weekSubText;
+
+    const filterP1 = (d) => (filters.month.length === 0 || filters.month.includes(d.month));
+    const filterMain = (d) => filterP1(d) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+
+    let allMonths = new Set();
+    dbMaster.forEach(d => { if(d.month) allMonths.add(d.month.toLowerCase()); });
+    let sortedAvailable = Array.from(allMonths).sort((a,b) => monthOrder[a] - monthOrder[b]);
+
+    let targetM = null;
+    if (filters.month.length === 0) {
+        targetM = sortedAvailable.length > 0 ? sortedAvailable[sortedAvailable.length - 1] : null;
+    } else {
+        let selectedSorted = filters.month.map(m=>m.toLowerCase()).sort((a,b) => monthOrder[a] - monthOrder[b]);
+        targetM = selectedSorted[selectedSorted.length - 1];
+    }
+
+    let targetMNum = targetM ? monthOrder[targetM] : null;
+    let prevMNum = targetMNum ? targetMNum - 1 : null;
+    let prevM = Object.keys(monthOrder).find(k => monthOrder[k] === prevMNum);
+    let hasPrevMData = sortedAvailable.includes(prevM);
+
+    let activeMonths = new Set(); 
+
+    // CHÚ Ý SỬA LỖI INVOICE Ở ĐÂY: Thay vì invs là số (0), sử dụng invSet để loại trừ trùng lặp hoá đơn khi xé nhỏ Category
+    let sys = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), plannedVisits: 0 };
+    
+    let snapF4 = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
+    let snapF2 = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
+
+    let areaMapP1 = {}, weekMapP1 = {}; 
+    let kamMapData = {}, kaeMap = {}, treeMap = {}, segMap = {}; 
+    
+    let kaeActive = new Set(), dsrActive = new Set();
+    let kaeSales = 0, dsrSales = 0;
+    let kaeActivePrev = new Set(), dsrActivePrev = new Set();
+    let kaeSalesPrev = 0, dsrSalesPrev = 0;
+
+    // ================= LOGIC SNAPSHOT NHÂN SỰ =================
+    let pMonths = filters.month.map(m => m.toLowerCase());
+    if (pMonths.length === 0 && sortedAvailable.length > 0) {
+        pMonths = [sortedAvailable[sortedAvailable.length - 1]]; // Lấy tháng cuối cùng
+    }
+    let activeKamTree = new Set();
+    let activeKaeTree = new Set();
+    // ==========================================================
+
+    dbMaster.forEach(d => {
+        if(!d.cusCode) return;
+
+        // Quét nhân sự cho Snapshot
+        let isPersonnelTarget = pMonths.includes(d.month.toLowerCase()) && 
+                                (filters.hq.length === 0 || filters.hq.includes(d.hq)) && 
+                                (filters.area.length === 0 || filters.area.includes(d.area));
+        if (isPersonnelTarget) {
+            if (d._kam) activeKamTree.add(d._kam);
+            if (d._kam && d._kae) activeKaeTree.add(d._kam + '|' + d._kae);
+        }
+
+        let isP1 = filterP1(d);
+        let isMain = filterMain(d);
+        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+
+        if(isP1) {
+            const a = d.area;
+            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
+            areaMapP1[a].p.add(d.cusCode);
+        }
+
+        if(isMain) {
+            let wk = d._w + '|' + d.month;
+            let isW27 = (d._wiso === 'W27');
+            if (isW27) {
+                wk = 'W27_MERGED'; 
+            }
+
+            if (!weekMapP1[wk]) {
+                weekMapP1[wk] = { 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
+                    w: isW27 ? 'W5' : d._w,     
+                    m: isW27 ? 'Jun' : d.month, 
+                    _isW27: isW27 
+                };
+            }
+            weekMapP1[wk].p.add(d.cusCode);
+
+            sys.p.add(d.cusCode);
+            sys.plannedVisits++; 
+            activeMonths.add(d.month.toUpperCase()); 
+
+            const kam = d._kam;
+            if (kam) {
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
+                kamMapData[kam].p.add(d.cusCode);
+                kamMapData[kam].areas.add(d.area);
+            }
+
+            const kae = d._kae;
+            if (kae && !kae.toUpperCase().startsWith('KAM')) {
+                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
+                kaeMap[kae].p.add(d.cusCode);
+                kaeMap[kae].areas.add(d.area);
+            }
+
+            const seg = d.CusS ? String(d.CusS).toUpperCase().trim() : "N";
+            const segKey = d.area + '|' + seg;
+            if (!segMap[segKey]) segMap[segKey] = { p: new Set(), a: new Set(), s: 0 };
+            segMap[segKey].p.add(d.cusCode);
+        }
+
+        if (isHrTarget) {
+            const rt = d._rtMap[d.cusCode] || "UNKNOWN";
+            if (rt === 'F4') snapF4.p.add(d.cusCode);
+            if (rt === 'F2') snapF2.p.add(d.cusCode);
+
+            const kae = d._kae;
+            let rawKae = String(d.kae).trim();
+            if (kae && !kae.toUpperCase().startsWith('KAM') && !rawKae.includes('❌')) {
+                if (kae.toUpperCase().includes('DSR')) dsrActive.add(kae);
+                else kaeActive.add(kae);
+            }
+        }
+
+        if (isHrPrev) {
+            const kae = d._kae;
+            let rawKae = String(d.kae).trim();
+            if (kae && !kae.toUpperCase().startsWith('KAM') && !rawKae.includes('❌')) {
+                if (kae.toUpperCase().includes('DSR')) dsrActivePrev.add(kae);
+                else kaeActivePrev.add(kae);
+            }
+        }
+    });
+
+    dbSales.forEach(d => {
+        const v = d.sales || 0;
+        const skus = d.skuLines || 0;
+        
+        // Tạo unique Invoice ID: dùng ID gốc nếu có, nếu không thì tự ghép (Khách hàng + Tháng + Tuần + Ngày)
+        const invId = d.invoiceId || d.invId || d.orderId || d.billId || d.InvId || d.InvoiceId || (d.cusCode + '|' + d.month + '|' + d._w + (d.date ? '|' + d.date : ''));
+        
+        // Quét nhân sự cho Snapshot
+        let isPersonnelTarget = pMonths.includes(d.month.toLowerCase()) && 
+                                (filters.hq.length === 0 || filters.hq.includes(d.hq)) && 
+                                (filters.area.length === 0 || filters.area.includes(d.area));
+        if (isPersonnelTarget) {
+            if (d._kam) activeKamTree.add(d._kam);
+            if (d._kam && d._kae) activeKaeTree.add(d._kam + '|' + d._kae);
+        }
+
+        let isP1 = filterP1(d);
+        let isMain = filterMain(d);
+
+        let isHrTarget = targetM && (d.month.toLowerCase() === targetM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+        let isHrPrev = hasPrevMData && prevM && (d.month.toLowerCase() === prevM) && (filters.hq.length === 0 || filters.hq.includes(d.hq)) && (filters.area.length === 0 || filters.area.includes(d.area));
+
+        if(isP1) {
+            const a = d.area;
+            if (!areaMapP1[a]) areaMapP1[a] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set() };
+            areaMapP1[a].s += v;
+            if (v > 0) { areaMapP1[a].a.add(d.cusCode); areaMapP1[a].skus += skus; areaMapP1[a].invSet.add(invId); }
+        }
+
+        if(isMain) {
+            let wk = d._w + '|' + d.month;
+            let isW27 = (d._wiso === 'W27');
+            if (isW27) {
+                wk = 'W27_MERGED';
+            }
+
+            if (!weekMapP1[wk]) {
+                weekMapP1[wk] = { 
+                    p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
+                    w: isW27 ? 'W5' : d._w, 
+                    m: isW27 ? 'Jun' : d.month,
+                    _isW27: isW27 
+                };
+            }
+            weekMapP1[wk].s += v;
+            if (v > 0) { weekMapP1[wk].a.add(d.cusCode); weekMapP1[wk].skus += skus; weekMapP1[wk].invSet.add(invId); }
+
+            sys.s += v;
+            if (v > 0) { sys.a.add(d.cusCode); sys.skus += skus; sys.invSet.add(invId); }
+
+            const kam = d._kam;
+            if (kam) {
+                if (!kamMapData[kam]) kamMapData[kam] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
+                kamMapData[kam].s += v;
+                kamMapData[kam].areas.add(d.area);
+                if (v > 0) { kamMapData[kam].a.add(d.cusCode); kamMapData[kam].skus += skus; kamMapData[kam].invSet.add(invId); }
+            }
+
+            const kae = d._kae;
+            if (kae && !kae.toUpperCase().startsWith('KAM')) {
+                if (!kaeMap[kae]) kaeMap[kae] = { p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), areas: new Set() };
+                kaeMap[kae].s += v;
+                kaeMap[kae].areas.add(d.area);
+                if (v > 0) { kaeMap[kae].a.add(d.cusCode); kaeMap[kae].skus += skus; kaeMap[kae].invSet.add(invId); }
+            }
+
+            if (kam && kae) {
+                let kamDisplay = d._kam_display;
+                let kaeDisplay = d._kae_display;
+                
+                if (!treeMap[kam]) treeMap[kam] = { s: 0, sByM: {}, kaes: {}, display: kamDisplay };
+                if (!treeMap[kam].kaes[kae]) treeMap[kam].kaes[kae] = { s: 0, sByM: {}, display: kaeDisplay };
+                
+                let m = d.month.toUpperCase();
+                if (!treeMap[kam].sByM[m]) treeMap[kam].sByM[m] = 0;
+                if (!treeMap[kam].kaes[kae].sByM[m]) treeMap[kam].kaes[kae].sByM[m] = 0;
+                
+                treeMap[kam].s += v; 
+                treeMap[kam].kaes[kae].s += v;
+                treeMap[kam].sByM[m] += v; 
+                treeMap[kam].kaes[kae].sByM[m] += v;
+                
+                if (kamDisplay.match(/[✔️❌]/)) treeMap[kam].display = kamDisplay;
+                if (kaeDisplay.match(/[✔️❌]/)) treeMap[kam].kaes[kae].display = kaeDisplay;
+            }
+
+            const seg = d._segMap[d.cusCode] || "N";
+            const segKey = d.area + '|' + seg;
+            if (!segMap[segKey]) segMap[segKey] = { p: new Set(), a: new Set(), s: 0 };
+            segMap[segKey].s += v;
+            if (v > 0) { segMap[segKey].a.add(d.cusCode); }
+        }
+
+        if (isHrTarget) {
+            const rt = d._rtMap[d.cusCode] || "UNKNOWN";
+            if (rt === 'F4') {
+                snapF4.s += v;
+                if (v > 0) { snapF4.a.add(d.cusCode); snapF4.skus += skus; snapF4.invSet.add(invId); }
+            }
+            if (rt === 'F2') {
+                snapF2.s += v;
+                if (v > 0) { snapF2.a.add(d.cusCode); snapF2.skus += skus; snapF2.invSet.add(invId); }
+            }
+
+            const kae = d._kae;
+            if (kae && !kae.toUpperCase().startsWith('KAM')) {
+                if (kae.toUpperCase().includes('DSR')) dsrSales += v;
+                else kaeSales += v;
+            }
+        }
+
+        if (isHrPrev) {
+            const kae = d._kae;
+            if (kae && !kae.toUpperCase().startsWith('KAM')) {
+                if (kae.toUpperCase().includes('DSR')) dsrSalesPrev += v;
+                else kaeSalesPrev += v;
+            }
+        }
+    });
+
+    // 1. UPDATE KPIs
+    let sysAc = sys.a.size; let sysTc = sys.p.size;
+    
+    document.getElementById("val-sales").innerText = fmt(sys.s);
+    document.getElementById("val-active-cust").innerText = fmt(sysAc);
+
+    let trueStrike = sys.plannedVisits > 0 ? (sys.invSet.size / sys.plannedVisits * 100) : 0;
+    let penetration = sysTc > 0 ? (sysAc / sysTc * 100) : 0;
+    document.getElementById("val-true-strike").innerText = trueStrike.toFixed(1) + "%";
+    document.getElementById("val-penetration").innerText = penetration.toFixed(1) + "%";
+
+    document.getElementById("val-drop-f4").innerText = snapF4.invSet.size > 0 ? fmt(snapF4.s / snapF4.invSet.size) : 0;
+    document.getElementById("val-freq-f4").innerText = snapF4.a.size > 0 ? (snapF4.invSet.size / snapF4.a.size).toFixed(1) : "0.0";
+    document.getElementById("val-lppc-f4").innerText = snapF4.invSet.size > 0 ? (snapF4.skus / snapF4.invSet.size).toFixed(1) : "0.0";
+
+    document.getElementById("val-drop-f2").innerText = snapF2.invSet.size > 0 ? fmt(snapF2.s / snapF2.invSet.size) : 0;
+    document.getElementById("val-freq-f2").innerText = snapF2.a.size > 0 ? (snapF2.invSet.size / snapF2.a.size).toFixed(1) : "0.0";
+    document.getElementById("val-lppc-f2").innerText = snapF2.invSet.size > 0 ? (snapF2.skus / snapF2.invSet.size).toFixed(1) : "0.0";
+
+    document.getElementById("val-headcount-kae").innerText = fmt(kaeActive.size);
+    document.getElementById("val-headcount-dsr").innerText = fmt(dsrActive.size);
+    
+    let curAvgKae = kaeActive.size > 0 ? (kaeSales / kaeActive.size) : 0;
+    let curAvgDsr = dsrActive.size > 0 ? (dsrSales / dsrActive.size) : 0;
+    document.getElementById("val-avg-kae").innerText = fmt(curAvgKae);
+    document.getElementById("val-avg-dsr").innerText = fmt(curAvgDsr);
+
+    if (hasPrevMData) {
+        document.getElementById("mom-headcount-kae").innerHTML = getMoMHtml(kaeActive.size, kaeActivePrev.size);
+        document.getElementById("mom-headcount-dsr").innerHTML = getMoMHtml(dsrActive.size, dsrActivePrev.size);
+        
+        let prevAvgKae = kaeActivePrev.size > 0 ? (kaeSalesPrev / kaeActivePrev.size) : 0;
+        let prevAvgDsr = dsrActivePrev.size > 0 ? (dsrSalesPrev / dsrActivePrev.size) : 0;
+        document.getElementById("mom-avg-kae").innerHTML = getMoMHtml(curAvgKae, prevAvgKae);
+        document.getElementById("mom-avg-dsr").innerHTML = getMoMHtml(curAvgDsr, prevAvgDsr);
+    } else {
+        document.getElementById("mom-headcount-kae").innerHTML = '';
+        document.getElementById("mom-headcount-dsr").innerHTML = '';
+        document.getElementById("mom-avg-kae").innerHTML = '';
+        document.getElementById("mom-avg-dsr").innerHTML = '';
+    }
+
+    // 3. TREE PERSONNEL
+    let getMonthNum = (mStr) => { 
+        let c = mStr.toLowerCase().replace('m','').replace('t','').trim(); 
+        return !isNaN(c) ? parseInt(c) : (monthOrder[mStr.toLowerCase()] || 99); 
+    };
+    let sortedMonths = Array.from(activeMonths).sort((a,b) => getMonthNum(a) - getMonthNum(b));
+    let colCount = sortedMonths.length; 
+    
+    let gridStyle = `grid-template-columns: minmax(130px, 2.5fr) repeat(${colCount}, minmax(60px, 1fr)); gap: 10px; align-items: center; text-align: right; width: 100%;`;
+
+    let treeHtml = `<div style="min-width: 350px;">`; 
+    treeHtml += `<div style="display:grid; ${gridStyle} padding: 0 14px 10px 14px; font-weight: 800; color: var(--text-muted); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;">
+        <span style="text-align: left;">Nhân sự</span>
+        ${sortedMonths.map(m => `<span>${m}</span>`).join('')}
+    </div>`;
+
+    Object.keys(treeMap).sort((a,b) => treeMap[b].s - treeMap[a].s).forEach(k => {
+        // CHỐT CHẶN: Chỉ hiển thị KAM nếu có trong tháng Snapshot
+        if (!activeKamTree.has(k)) return;
+        
+        // CHỐT CHẶN: Chỉ lấy các KAE có hoạt động trong tháng Snapshot
+        let kaeKeys = Object.keys(treeMap[k].kaes).filter(ke => activeKaeTree.has(k + '|' + ke));
+        if (kaeKeys.length === 0) return; // Nếu KAM không có lính nào active, ẩn luôn KAM
+
+        let kamMonthHtml = sortedMonths.map(m => `<span style="color:var(--primary); font-weight:bold;">${fmt(treeMap[k].sByM[m] || 0)}</span>`).join('');
+        treeHtml += `<details class="tree-node"><summary style="display:grid; ${gridStyle}">
+            <div class="t-name">${treeMap[k].display}</div>
+            ${kamMonthHtml}
+        </summary><div class="t-children">`;
+        
+        kaeKeys.sort((a,b) => treeMap[k].kaes[b].s - treeMap[k].kaes[a].s).forEach(ke => {
+            let kaeMonthHtml = sortedMonths.map(m => `<span>${fmt(treeMap[k].kaes[ke].sByM[m] || 0)}</span>`).join('');
+            treeHtml += `<div class="t-leaf" style="display:grid; ${gridStyle}">
+                <div class="t-name leaf-name">${treeMap[k].kaes[ke].display}</div>
+                ${kaeMonthHtml}
+            </div>`;
+        });
+        treeHtml += `</div></details>`;
+    });
+    treeHtml += `</div>`; 
+    document.getElementById('tree-container').innerHTML = treeHtml || '<div style="color:var(--text-muted); font-style:italic;">No Personnel Data</div>';
+
+    // 4. CHARTS P1 
+    let p1Total = { tc: 0, ac: 0, s: 0, skus: 0, invs: 0 };
+    Object.values(areaMapP1).forEach(m => { p1Total.tc+=m.p.size; p1Total.ac+=m.a.size; p1Total.s+=m.s; p1Total.skus+=m.skus; p1Total.invs+=m.invSet.size; });
+    let p1Kpi = { tc: p1Total.tc, ac: p1Total.ac, s: p1Total.s, avgSku: p1Total.invs > 0 ? p1Total.skus/p1Total.invs : 0, freq: p1Total.ac > 0 ? p1Total.invs/p1Total.ac : 0, invs: p1Total.invs };
+
+    let areaData = Object.keys(areaMapP1).map(k => ({ label: k, tc: areaMapP1[k].p.size, ac: areaMapP1[k].a.size, s: areaMapP1[k].s, avgSku: areaMapP1[k].invSet.size > 0 ? areaMapP1[k].skus/areaMapP1[k].invSet.size : 0, freq: areaMapP1[k].a.size > 0 ? areaMapP1[k].invSet.size/areaMapP1[k].a.size : 0, invs: areaMapP1[k].invSet.size })).sort((a,b) => b.s - a.s);
+    drawChart('areaChart', areaData, 'label', false); 
+    drawHorizontalTable('areaHeaderRow', 'areaTableBody', areaData, t('colArea'), true, { label: t('sysTotal'), ...p1Kpi }, true); 
+
+    let weekData = Object.keys(weekMapP1).map(k => ({ 
+        label: weekMapP1[k]._isW27 ? (lang === 'vi' ? 'W5 T6+W0 T7' : 'W5 M6+W0 M7') : formatWM(weekMapP1[k].w, weekMapP1[k].m), 
+        tc: weekMapP1[k].p.size, 
+        ac: weekMapP1[k].a.size, 
+        s: weekMapP1[k].s, 
+        avgSku: weekMapP1[k].invSet.size > 0 ? weekMapP1[k].skus/weekMapP1[k].invSet.size : 0, 
+        freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invSet.size/weekMapP1[k].a.size : 0, 
+        invs: weekMapP1[k].invSet.size, 
+        w: weekMapP1[k].w, 
+        m: weekMapP1[k].m 
+    })).sort((a,b) => { 
+        let m1 = monthOrder[a.m.toLowerCase()]||99; 
+        let m2 = monthOrder[b.m.toLowerCase()]||99; 
+        // Bóc tách lấy phần số của Tuần (VD: 'W5' -> 5) để so sánh chuẩn xác
+        let w1 = parseInt(a.w.replace(/\D/g, '')) || 0;
+        let w2 = parseInt(b.w.replace(/\D/g, '')) || 0;
+        return m1 !== m2 ? m1 - m2 : w1 - w2; 
+    });
+    
+    drawChart('weekChart', weekData, 'label', false); 
+    
+    let sysKpiObjWeek = { tc: sysTc, ac: sysAc, s: sys.s, avgSku: sys.invSet.size > 0 ? sys.skus/sys.invSet.size : 0, freq: sysAc > 0 ? sys.invSet.size/sysAc : 0, invs: sys.invSet.size };
+    drawHorizontalTable('weekHeaderRow', 'weekTableBody', weekData, t('colWeek'), true, { label: t('sysTotal'), ...sysKpiObjWeek }, false, true); 
+
+    // 5. CHARTS P2 
+    let kamData = Object.keys(kamMapData).map(k => ({
+        label: k, areaStr: Array.from(kamMapData[k].areas).join(', '),
+        tc: kamMapData[k].p.size, ac: kamMapData[k].a.size, s: kamMapData[k].s, avgSku: kamMapData[k].invSet.size > 0 ? kamMapData[k].skus/kamMapData[k].invSet.size : 0, freq: kamMapData[k].a.size > 0 ? kamMapData[k].invSet.size/kamMapData[k].a.size : 0, invs: kamMapData[k].invSet.size
+    })).sort((a,b) => b.s - a.s).slice(0, 10);
+    drawChart('kamChart', kamData, 'label', true); 
+    drawVerticalTable('kamHeaderRow', 'kamTableBody', kamData, t('colKam'), false, null, false, false, true); 
+
+    // Xử lý lưu trữ toàn bộ dữ liệu KAE (không cắt slice) trước khi tạo bảng hiển thị
+    let kaeDataFull = Object.keys(kaeMap).map(k => ({
+        label: k, areaStr: Array.from(kaeMap[k].areas).join(', '),
+        tc: kaeMap[k].p.size, ac: kaeMap[k].a.size, s: kaeMap[k].s, avgSku: kaeMap[k].invSet.size > 0 ? kaeMap[k].skus/kaeMap[k].invSet.size : 0, freq: kaeMap[k].a.size > 0 ? kaeMap[k].invSet.size/kaeMap[k].a.size : 0, invs: kaeMap[k].invSet.size
+    })).sort((a,b) => b.s - a.s);
+    
+    fullKaeData = kaeDataFull; // Gán danh sách đầy đủ vào bộ nhớ toàn cục cho nút tải file
+    
+    let kaeData = kaeDataFull.slice(0, 10); // Cắt top 10 đưa vào biểu đồ & view
+    drawChart('dayChart', kaeData, 'label', true); 
+    drawVerticalTable('dayHeaderRow', 'dayTableBody', kaeData, t('colKae'), false, null, false, false, true); 
+
+    // 6. PART 3: SEGMENTATION
+    renderPart3(segMap, sysKpiObjWeek);
+}
+
+// Hàm thực hiện chức năng xuất Excel bằng SheetJS cho toàn bộ nhân sự theo bộ lọc
+function exportKaeExcel() {
+    if (!fullKaeData || fullKaeData.length === 0) {
+        alert(lang === 'vi' ? 'Không có dữ liệu để xuất file!' : 'No data available to export!');
+        return;
+    }
+
+    // Thiết lập cấu trúc Tiêu đề cột đa ngôn ngữ dựa theo trạng thái nút VI/EN
+    const headers = lang === 'vi' ? 
+        ["KHU VỰC", "KAE/DSR", "KH TRÊN TUYẾN", "KH LÊN ĐƠN", "TỶ LỆ CHỐT ĐƠN", "SELL-OUT", "SKU TB/ĐƠN", "GIÁ TRỊ TB/ĐƠN", "TẦN SUẤT LÊN ĐƠN"] :
+        ["AREA", "KAE/DSR", "ROUTE", "ACTIVE", "STRIKE RATE", "SELL-OUT", "LPPC", "VALUE/INVOICE", "FREQ"];
+
+    const excelRows = fullKaeData.map(d => {
+        let sr = d.tc > 0 ? ((d.ac / d.tc) * 100).toFixed(1) + '%' : '0.0%';
+        let drop = d.invs > 0 ? Math.round(d.s / d.invs) : 0;
+
+        return lang === 'vi' ? {
+            "KHU VỰC": d.areaStr,
+            "KAE/DSR": d.label,
+            "KH TRÊN TUYẾN": d.tc,
+            "KH LÊN ĐƠN": d.ac,
+            "TỶ LỆ CHỐT ĐƠN": sr,
+            "SELL-OUT": d.s,
+            "SKU TB/ĐƠN": Number(d.avgSku.toFixed(1)),
+            "GIÁ TRỊ TB/ĐƠN": drop,
+            "TẦN SUẤT LÊN ĐƠN": Number(d.freq.toFixed(1))
+        } : {
+            "AREA": d.areaStr,
+            "KAE/DSR": d.label,
+            "ROUTE": d.tc,
+            "ACTIVE": d.ac,
+            "STRIKE RATE": sr,
+            "SELL-OUT": d.s,
+            "LPPC": Number(d.avgSku.toFixed(1)),
+            "VALUE/INVOICE": drop,
+            "FREQ": Number(d.freq.toFixed(1))
+        };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "KAE Performance Full");
+
+    // Khởi tạo tên file thông minh gắn kèm trạng thái bộ lọc hiện hành
+    let filename = "KAE_Performance_All";
+    if (filters.month.length > 0) filename += "_" + filters.month.join("-");
+    if (filters.area.length > 0) filename += "_" + filters.area.join("-");
+    filename += ".xlsx";
+
+    XLSX.writeFile(workbook, filename);
+}
+
+function renderPart3(segMap, sysKpiObj) {
+    let segList = ['A', 'B', 'C', 'D', 'N'];
+    let html = `<table class="segment-table"><thead><tr><th rowspan="2">${t('colArea')}</th><th rowspan="2">${t('segColClass')}</th><th colspan="4">${t('segTblH1')}</th></tr><tr><th>${t('tbPlan')}</th><th>${t('tbActive')}</th><th>${t('tbStrike')}</th><th>${t('tbSales')}</th></tr></thead><tbody>`;
+
+    if(filters.area.length === 0) {
+        let aggSeg = { 'A':{p:0,a:0,s:0}, 'B':{p:0,a:0,s:0}, 'C':{p:0,a:0,s:0}, 'D':{p:0,a:0,s:0}, 'N':{p:0,a:0,s:0} };
+        Object.keys(segMap).forEach(key => {
+            let seg = key.split('|')[1];
+            aggSeg[seg].p += segMap[key].p.size; aggSeg[seg].a += segMap[key].a.size; aggSeg[seg].s += segMap[key].s;
+        });
+
+        let isF = true;
+        segList.forEach(seg => {
+            let d = aggSeg[seg];
+            let pctP = sysKpiObj.tc > 0 ? (d.p/sysKpiObj.tc*100).toFixed(1) : 0;
+            let pctA = sysKpiObj.ac > 0 ? (d.a/sysKpiObj.ac*100).toFixed(1) : 0;
+            let sr = d.p > 0 ? (d.a/d.p*100).toFixed(1) + '%' : '0.0%';
+            
+            html += `<tr>`;
+            if(isF) { html += `<td rowspan="6" class="seg-area-cell">${t('sysTotal')}</td>`; isF = false; }
+            html += `<td class="seg-name-cell">${segNames[seg]}</td>
+                     <td>${fmt(d.p)} <span class="pct-badge">${pctP}%</span></td>
+                     <td><span style="color:var(--primary); font-weight:bold;">${fmt(d.a)}</span> <span class="pct-badge active-badge">${pctA}%</span></td>
+                     <td style="font-weight:bold;">${sr}</td>
+                     <td style="text-align:right; font-weight:600; color:var(--primary);">${fmt(d.s)}</td></tr>`;
+        });
+
+        html += `<tr style="background-color: rgba(121, 189, 154, 0.15); font-weight: 900;">
+                 <td class="seg-name-cell" style="color: var(--text-main); font-size:12px; text-transform:uppercase;">${t('sysTotal')}</td>
+                 <td>${fmt(sysKpiObj.tc)}</td><td style="color:var(--primary);">${fmt(sysKpiObj.ac)}</td>
+                 <td style="color:var(--text-main);">${sysKpiObj.tc > 0 ? (sysKpiObj.ac/sysKpiObj.tc*100).toFixed(1) : 0}%</td>
+                 <td style="text-align:right; color:var(--text-main);">${fmt(sysKpiObj.s)}</td></tr>`;
+    } else {
+        let sysPlanCount = 0; let sysActCount = 0; let sysSalesSum = 0;
+        filters.area.forEach(area => {
+            let isF = true; let areaPlanCount = 0; let areaActCount = 0; let areaSalesSum = 0;
+            segList.forEach(seg => {
+                const data = segMap[area + '|' + seg] || { p: new Set(), a: new Set(), s: 0 };
+                areaPlanCount += data.p.size; areaActCount += data.a.size; areaSalesSum += data.s;
+            });
+            sysPlanCount += areaPlanCount; sysActCount += areaActCount; sysSalesSum += areaSalesSum;
+
+            segList.forEach(seg => {
+                const data = segMap[area + '|' + seg] || { p: new Set(), a: new Set(), s: 0 };
+                let pSize = data.p.size; let aSize = data.a.size;
+                let pctP = areaPlanCount > 0 ? (pSize/areaPlanCount*100).toFixed(1) : 0;
+                let pctA = areaActCount > 0 ? (aSize/areaActCount*100).toFixed(1) : 0;
+                let sr = pSize > 0 ? (aSize/pSize*100).toFixed(1) + '%' : '0.0%';
+
+                html += `<tr>`;
+                if(isF) { html += `<td rowspan="6" class="seg-area-cell">${area}</td>`; isF = false; }
+                html += `<td class="seg-name-cell">${segNames[seg]}</td>
+                         <td>${fmt(pSize)} <span class="pct-badge">${pctP}%</span></td>
+                         <td><span style="color:var(--primary); font-weight:bold;">${fmt(aSize)}</span> <span class="pct-badge active-badge">${pctA}%</span></td>
+                         <td style="font-weight:bold;">${sr}</td>
+                         <td style="text-align:right; font-weight:600; color:var(--primary);">${fmt(data.s)}</td></tr>`;
+            });
+            
+            let areaSr = areaPlanCount > 0 ? ((areaActCount / areaPlanCount) * 100).toFixed(1) + '%' : '0.0%';
+            html += `<tr style="background-color: var(--bg-card); font-weight: bold; border-top: 1px solid var(--secondary);">
+                     <td class="seg-name-cell" style="color: var(--text-main);">TỔNG VÙNG</td>
+                     <td>${fmt(areaPlanCount)}</td><td style="color:var(--primary);">${fmt(areaActCount)}</td>
+                     <td style="color:var(--text-main);">${areaSr}</td><td style="text-align:right; color:var(--text-main);">${fmt(areaSalesSum)}</td></tr>`;
+        });
+
+        let finalSr = sysPlanCount > 0 ? ((sysActCount / sysPlanCount) * 100).toFixed(1) + '%' : '0.0%';
+        html += `<tr style="background-color: rgba(121, 189, 154, 0.15); font-weight: 900;">
+                 <td colspan="2" class="seg-name-cell" style="color: var(--text-main); font-size:14px; text-transform:uppercase;">${t('sysTotal')}</td>
+                 <td>${fmt(sysPlanCount)}</td><td style="color:var(--primary);">${fmt(sysActCount)}</td>
+                 <td style="color:var(--text-main);">${finalSr}</td><td style="text-align:right; color:var(--text-main);">${fmt(sysSalesSum)}</td></tr>`;
+    }
+
+    html += `</tbody></table>`;
+    document.getElementById('segmentAreaTableContainer').innerHTML = html;
+}
+
+function drawHorizontalTable(hid, bid, data, titleNameLabel, showTotal, exp, checkRisk, hideFreq = false) {
+    let rd = [...data]; if (showTotal && exp) rd.push(exp);
+    
+    document.getElementById(hid).innerHTML = `<th class="label-cell" style="background:var(--bg-card);">${titleNameLabel}</th>` + rd.map(x => `<th style="${x === rd[rd.length-1] && showTotal ? 'background: var(--primary); color: var(--bg-main);' : ''}">${x.label || ""}</th>`).join("");
+    
+    let rows = [
+        { l: t('tbPlan'), k: "tc", f: v => fmt(v) },
+        { l: t('tbActive'), k: "ac", f: v => `<b style="color:var(--primary)">${fmt(v)}</b>` },
+        { l: t('tbStrike'), k: "sr", f: (_, i) => {
+            let sr = (i.tc > 0 ? (i.ac/i.tc*100) : 0);
+            let risk = (checkRisk && sr < 50) ? 'risk-flag' : '';
+            return `<b class="${risk}">${sr.toFixed(1)}% ${risk ? '⚠️' : ''}</b>`;
+        }},
+        { l: t('tbSales'), k: "s", f: v => fmt(v) },
+        { l: t('tbLppc'), k: "avgSku", f: v => `<span style="color:var(--accent-warning); font-weight:800">${(Number(v)||0).toFixed(1)}</span>` },
+        { l: t('tbDrop'), k: "ds", f: (_, i) => fmt(i.invs > 0 ? i.s/i.invs : 0) }
+    ];
+
+    if (!hideFreq) {
+        rows.push({ l: t('tbFreq'), k: "freq", f: v => `<span style="color:var(--accent-success); font-weight:800">${(Number(v)||0).toFixed(1)}</span>` });
+    }
+    
+    document.getElementById(bid).innerHTML = rows.map(r => `<tr><td class="label-cell">${r.l}</td>${rd.map(x => `<td style="${x === rd[rd.length-1] && showTotal ? 'background:rgba(121, 189, 154, 0.1);font-weight:800' : ''}">${r.f(x[r.k], x)}</td>`).join("")}</tr>`).join("");
+}
+
+function drawVerticalTable(hid, bid, data, titleNameLabel, showTotal, exp, checkRisk, hideFreq = false, showAreaCol = false) {
+    let areaTh = showAreaCol ? `<th class="label-cell" style="width:100px; min-width:100px; max-width:100px; z-index:3;">${t('colArea')}</th>` : '';
+    let nameThStyle = showAreaCol ? `style="left: 100px; border-left: 1px solid var(--border-color); z-index:3;"` : '';
+
+    document.getElementById(hid).innerHTML = `
+        ${areaTh}
+        <th class="label-cell" ${nameThStyle}>${titleNameLabel}</th>
+        <th>${t('tbPlan')}</th>
+        <th>${t('tbActive')}</th>
+        <th>${t('tbStrike')}</th>
+        <th>${t('tbSales')}</th>
+        <th>${t('tbLppc')}</th>
+        <th>${t('tbDrop')}</th>
+        ${hideFreq ? '' : `<th>${t('tbFreq')}</th>`}
+    `;
+    
+    let bodyHtml = data.map(d => {
+        let sr = d.tc > 0 ? (d.ac/d.tc*100) : 0;
+        let ds = d.invs > 0 ? d.s/d.invs : 0;
+        let risk = (checkRisk && sr < 50) ? 'risk-flag' : '';
+        
+        let areaTd = showAreaCol ? `<td class="label-cell" style="width:100px; min-width:100px; max-width:100px; white-space:normal; font-size:10px; color:var(--text-muted); z-index:2;">${d.areaStr || ''}</td>` : '';
+        let nameTdStyle = showAreaCol ? `style="left: 100px; border-left: 1px solid var(--border-color); font-size:11px; text-transform:uppercase; z-index:2;"` : `style="font-size:11px; text-transform:uppercase;"`;
+
+        return `<tr>
+            ${areaTd}
+            <td class="label-cell" ${nameTdStyle}>${d.label}</td>
+            <td>${fmt(d.tc)}</td>
+            <td><b style="color:var(--primary)">${fmt(d.ac)}</b></td>
+            <td class="${risk}"><b style="${risk ? '' : 'color:var(--accent-success)'}">${sr.toFixed(1)}% ${risk ? '⚠️' : ''}</b></td>
+            <td style="text-align:right">${fmt(d.s)}</td>
+            <td><span style="color:var(--accent-warning); font-weight:bold">${d.avgSku.toFixed(1)}</span></td>
+            <td style="text-align:right">${fmt(ds)}</td>
+            ${hideFreq ? '' : `<td><span style="color:var(--accent-success); font-weight:bold">${(d.freq || 0).toFixed(1)}</span></td>`}
+        </tr>`;
+    }).join("");
+
+    if (showTotal && exp) {
+        let sr = exp.tc > 0 ? (exp.ac/exp.tc*100) : 0;
+        let ds = exp.invs > 0 ? exp.s/exp.invs : 0;
+        bodyHtml += `<tr style="background:rgba(121, 189, 154, 0.15);">
+            <td class="label-cell" style="color:var(--text-main); font-weight:900">${exp.label}</td>
+            <td style="font-weight:bold">${fmt(exp.tc)}</td>
+            <td><b style="color:var(--primary)">${fmt(exp.ac)}</b></td>
+            <td><b style="color:var(--accent-success)">${sr.toFixed(1)}%</b></td>
+            <td style="text-align:right; font-weight:bold">${fmt(exp.s)}</td>
+            <td><span style="color:var(--accent-warning); font-weight:bold">${exp.avgSku.toFixed(1)}</span></td>
+            <td style="text-align:right; font-weight:bold">${fmt(ds)}</td>
+            ${hideFreq ? '' : `<td><span style="color:var(--accent-success); font-weight:bold">${(exp.freq || 0).toFixed(1)}</span></td>`}
+        </tr>`;
+    }
+    
+    document.getElementById(bid).innerHTML = bodyHtml;
+}
+
+function drawChart(id, data, labelKey, isHorizontal) {
+    if(charts[id]) charts[id].destroy();
+
+    let scalesConfig = {};
+    if (isHorizontal) {
+        scalesConfig = {
+            y: { grid: { display: false } },
+            x: { beginAtZero: true, title: { display: true, text: t('axisCust') } },
+            xS: { position: 'top', beginAtZero: true, ticks: { callback: v => fmt(v) }, title: { display: true, text: t('axisVnd') }, grid: { display: false } }
+        };
+    } else {
+        scalesConfig = {
+            x: { grid: { display: false } },
+            y: { beginAtZero: true, title: { display: true, text: t('axisCust') } },
+            yS: { position: 'right', beginAtZero: true, ticks: { callback: v => fmt(v) }, title: { display: true, text: t('axisVnd') }, grid: { display: false } }
+        };
+    }
+
+    const colorLine = '#CFF09E';       
+    const colorBarTotal = '#0B486B';   
+    const colorBarActive = '#79BD9A';  
+
+    charts[id] = new Chart(document.getElementById(id), {
+        data: {
+            labels: data.map(x => x[labelKey]),
+            datasets: [
+                { type:'line', label: t('legSales'), data: data.map(x => x.s), borderColor: colorLine, backgroundColor: colorLine, xAxisID: isHorizontal ? 'xS' : undefined, yAxisID: isHorizontal ? undefined : 'yS', tension:0.3, pointRadius: 4 },
+                { type:'bar', label: t('legTotal'), data: data.map(x => x.tc), backgroundColor: colorBarTotal, xAxisID: isHorizontal ? 'x' : undefined, yAxisID: isHorizontal ? undefined : 'y', barPercentage: 0.85, categoryPercentage: 0.85 },
+                { type:'bar', label: t('legActive'), data: data.map(x => x.ac), backgroundColor: colorBarActive, xAxisID: isHorizontal ? 'x' : undefined, yAxisID: isHorizontal ? undefined : 'y', barPercentage: 0.85, categoryPercentage: 0.85 }
+            ]
+        },
+        options: {
+            indexAxis: isHorizontal ? 'y' : 'x',
+            responsive: true, maintainAspectRatio: false,
+            scales: scalesConfig,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 15 } } }
+        }
+    });
+}
+
+function init() {
+    dbMaster = []; dbSales = [];
+    if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
+    if (typeof dbMasterM6 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM6); dbSales = dbSales.concat(dbSalesM6); }
+    if (typeof dbMasterM7 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM7); dbSales = dbSales.concat(dbSalesM7); }
+
+    const segMapPre = {};
+    const rtMapPre = {}; 
+    
+    dbMaster.forEach(d => { 
+        if(d.cusCode) {
+            segMapPre[d.cusCode] = d.CusS ? String(d.CusS).toUpperCase().trim() : "N"; 
+            if(d.rt) rtMapPre[d.cusCode] = String(d.rt).toUpperCase().trim();
+        }
+    });
+
+    const pre = (arr) => arr.forEach(d => {
+        d.month = d.month ? String(d.month).trim() : "";
+        d._w = getW(d);
+        
+        d._wiso = d.wiso ? String(d.wiso).trim().toUpperCase() : (d.Wiso ? String(d.Wiso).trim().toUpperCase() : "");
+        
+        d.hq = d.hq ? String(d.hq).trim() : "";
+        d.area = d.area ? String(d.area).trim() : "Unknown Area";
+        
+        d._kam = cleanName(d.kam, true, d.area);
+        d._kae = cleanName(d.kae, false, d.area);
+        
+        let rawKam = String(d.kam || "").trim();
+        let rawKae = String(d.kae || "").trim();
+        let kamSign = rawKam.match(/[✔️❌]/) ? " " + rawKam.match(/[✔️❌]/)[0] : "";
+        let kaeSign = rawKae.match(/[✔️❌]/) ? " " + rawKae.match(/[✔️❌]/)[0] : "";
+
+        d._kam_display = d._kam ? (d._kam + kamSign) : "";
+        d._kae_display = d._kae ? (d._kae + kaeSign) : "";
+        
+        d._segMap = segMapPre;
+        d._rtMap = rtMapPre; 
+    });
+    pre(dbMaster); pre(dbSales);
+
+    setLang('vi');
+    setTimeout(() => { document.getElementById('loader-wrapper').classList.add('hidden'); }, 300);
+}
+</script>
+
+<script>
+(async function () {
+    function handleFatalError(source) {
+        var loaderText = document.querySelector('.loader-text');
+        var spinner = document.querySelector('.spinner-container');
+        
+        if(spinner) spinner.style.display = 'none';
+        if(loaderText) {
+            loaderText.innerHTML = '<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ LỖI BẢO MẬT HOẶC KẾT NỐI<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">Không có quyền truy cập: <b>' + source + '</b><br>Vui lòng quay lại Trang Hub để đăng nhập!</span></span>';
+        }
+    }
+
+    const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const BUCKET_NAME = 'data';
+    const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        alert("Phiên làm việc hết hạn hoặc chưa đăng nhập. Đang chuyển về Trang Hub...");
+        window.location.href = HUB_URL;
+        return; 
+    }
+
+    var version = '?t=' + new Date().getTime();
+    var localScripts = ['kamMap.js' + version]; 
+    var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js']; 
+
+    try {
+        const { data: signedUrlsData, error } = await supabase.storage
+            .from(BUCKET_NAME)
+            .createSignedUrls(secureDataFiles, 60);
+
+        if (error || !signedUrlsData) throw error;
+
+        var scriptsToLoad = [...localScripts];
+        signedUrlsData.forEach(item => {
+            if (item.error) throw new Error("Không có quyền đọc file: " + item.path);
+            scriptsToLoad.push(item.signedUrl); 
+        });
+
+        var loadedScripts = 0;
+        var hasError = false;
+
+        scriptsToLoad.forEach(function(src) {
+            var script = document.createElement('script');
+            script.src = src;
+            
+            script.onload = function() {
+                if (hasError) return;
+                loadedScripts++;
+                if (loadedScripts === scriptsToLoad.length) {
+                    if (typeof init === 'function') init();
+                }
+            };
+            
+            script.onerror = function() {
+                hasError = true;
+                handleFatalError(src.split('?')[0].substring(0, 60) + '...'); 
+            };
+            
+            document.body.appendChild(script);
+        });
+
+    } catch (err) {
+        console.error("Lỗi xác thực:", err);
+        handleFatalError("Dữ liệu bảo mật (Access Denied)");
+    }
+})();
 </script>
 </body>
 </html>
