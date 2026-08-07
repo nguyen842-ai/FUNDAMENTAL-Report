@@ -1104,7 +1104,7 @@ function init() {
     if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
     if (typeof dbMasterM6 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM6); dbSales = dbSales.concat(dbSalesM6); }
     if (typeof dbMasterM7 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM7); dbSales = dbSales.concat(dbSalesM7); }
-
+    if (typeof dbMasterM8 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM8); dbSales = dbSales.concat(dbSalesM8); }
     const segMapPre = {};
     const rtMapPre = {}; 
     
@@ -1182,7 +1182,7 @@ function init() {
 
         var version = '?t=' + new Date().getTime();
         var localScripts = ['kamMap.js' + version]; 
-        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js']; 
+        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
 
         const { data: signedUrlsData, error } = await supabase.storage
             .from(BUCKET_NAME)
