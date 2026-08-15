@@ -524,19 +524,25 @@ function render() {
 
             if(isMain) {
                 let wk = d._w + '|' + d.month;
-                let isW27 = (d._wiso === 'W27');
-                if (isW27) {
-                    wk = 'W27_MERGED'; 
-                }
+let isW27 = (d._wiso === 'W27');
+let isW28 = (d._wiso === 'W28'); // Thêm cờ nhận diện W28
 
-                if (!weekMapP1[wk]) {
-                    weekMapP1[wk] = { 
-                        p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
-                        w: isW27 ? 'W5' : d._w,     
-                        m: isW27 ? 'Jun' : d.month, 
-                        _isW27: isW27 
-                    };
-                }
+if (isW27) {
+    wk = 'W27_MERGED'; 
+} else if (isW28) {
+    wk = 'W28_MERGED'; // Gom nhóm chung cho W28
+}
+
+if (!weekMapP1[wk]) {
+    weekMapP1[wk] = { 
+        p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
+        // Phân bổ dữ liệu ảo để sorting (W28 lấy W4 của tháng Jul)
+        w: isW27 ? 'W5' : (isW28 ? 'W4' : d._w),     
+        m: isW27 ? 'Jun' : (isW28 ? 'Jul' : d.month), 
+        _isW27: isW27,
+        _isW28: isW28 // Lưu lại cờ để hiển thị nhãn
+    };
+}
                 weekMapP1[wk].p.add(d.cusCode);
 
                 sys.p.add(d.cusCode);
