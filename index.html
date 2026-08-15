@@ -524,25 +524,24 @@ function render() {
 
             if(isMain) {
                 let wk = d._w + '|' + d.month;
-let isW27 = (d._wiso === 'W27');
-let isW28 = (d._wiso === 'W28'); // Thêm cờ nhận diện W28
+                let isW27 = (d._wiso === 'W27');
+                let isW28 = (d._wiso === 'W28');
 
-if (isW27) {
-    wk = 'W27_MERGED'; 
-} else if (isW28) {
-    wk = 'W28_MERGED'; // Gom nhóm chung cho W28
-}
+                if (isW27) {
+                    wk = 'W27_MERGED'; 
+                } else if (isW28) {
+                    wk = 'W28_MERGED';
+                }
 
-if (!weekMapP1[wk]) {
-    weekMapP1[wk] = { 
-        p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
-        // Phân bổ dữ liệu ảo để sorting (W28 lấy W4 của tháng Jul)
-        w: isW27 ? 'W5' : (isW28 ? 'W4' : d._w),     
-        m: isW27 ? 'Jun' : (isW28 ? 'Jul' : d.month), 
-        _isW27: isW27,
-        _isW28: isW28 // Lưu lại cờ để hiển thị nhãn
-    };
-}
+                if (!weekMapP1[wk]) {
+                    weekMapP1[wk] = { 
+                        p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
+                        w: isW27 ? 'W5' : (isW28 ? 'W4' : d._w),     
+                        m: isW27 ? 'Jun' : (isW28 ? 'Jul' : d.month), 
+                        _isW27: isW27,
+                        _isW28: isW28
+                    };
+                }
                 weekMapP1[wk].p.add(d.cusCode);
 
                 sys.p.add(d.cusCode);
@@ -625,16 +624,21 @@ if (!weekMapP1[wk]) {
             if(isMain) {
                 let wk = d._w + '|' + (d.month||"");
                 let isW27 = (d._wiso === 'W27');
+                let isW28 = (d._wiso === 'W28');
+
                 if (isW27) {
                     wk = 'W27_MERGED';
+                } else if (isW28) {
+                    wk = 'W28_MERGED';
                 }
 
                 if (!weekMapP1[wk]) {
                     weekMapP1[wk] = { 
                         p: new Set(), a: new Set(), s: 0, skus: 0, invSet: new Set(), 
-                        w: isW27 ? 'W5' : d._w, 
-                        m: isW27 ? 'Jun' : (d.month||""),
-                        _isW27: isW27 
+                        w: isW27 ? 'W5' : (isW28 ? 'W4' : d._w), 
+                        m: isW27 ? 'Jun' : (isW28 ? 'Jul' : (d.month||"")),
+                        _isW27: isW27,
+                        _isW28: isW28 
                     };
                 }
                 weekMapP1[wk].s += v;
@@ -804,17 +808,25 @@ if (!weekMapP1[wk]) {
         drawChart('areaChart', areaData, 'label', false); 
         drawHorizontalTable('areaHeaderRow', 'areaTableBody', areaData, t('colArea'), true, { label: t('sysTotal'), ...p1Kpi }, true); 
 
-        let weekData = Object.keys(weekMapP1).map(k => ({ 
-            label: weekMapP1[k]._isW27 ? (lang === 'vi' ? 'W5 T6+W0 T7' : 'W5 M6+W0 M7') : formatWM(weekMapP1[k].w, weekMapP1[k].m), 
-            tc: weekMapP1[k].p.size, 
-            ac: weekMapP1[k].a.size, 
-            s: weekMapP1[k].s, 
-            avgSku: weekMapP1[k].invSet.size > 0 ? weekMapP1[k].skus/weekMapP1[k].invSet.size : 0, 
-            freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invSet.size/weekMapP1[k].a.size : 0, 
-            invs: weekMapP1[k].invSet.size, 
-            w: weekMapP1[k].w, 
-            m: weekMapP1[k].m 
-        })).sort((a,b) => { 
+        let weekData = Object.keys(weekMapP1).map(k => {
+            let displayLabel = formatWM(weekMapP1[k].w, weekMapP1[k].m);
+            if (weekMapP1[k]._isW27) {
+                displayLabel = (lang === 'vi') ? 'W5 T6+W0 T7' : 'W5 M6+W0 M7';
+            } else if (weekMapP1[k]._isW28) {
+                displayLabel = (lang === 'vi') ? 'W4 T7+W0 T8' : 'W4 M7+W0 M8';
+            }
+            return { 
+                label: displayLabel, 
+                tc: weekMapP1[k].p.size, 
+                ac: weekMapP1[k].a.size, 
+                s: weekMapP1[k].s, 
+                avgSku: weekMapP1[k].invSet.size > 0 ? weekMapP1[k].skus/weekMapP1[k].invSet.size : 0, 
+                freq: weekMapP1[k].a.size > 0 ? weekMapP1[k].invSet.size/weekMapP1[k].a.size : 0, 
+                invs: weekMapP1[k].invSet.size, 
+                w: weekMapP1[k].w, 
+                m: weekMapP1[k].m 
+            };
+        }).sort((a,b) => { 
             let m1 = monthOrder[(a.m||"").toString().toLowerCase()]||99; 
             let m2 = monthOrder[(b.m||"").toString().toLowerCase()]||99; 
             let w1 = parseInt((a.w||"").toString().replace(/\D/g, '')) || 0;
