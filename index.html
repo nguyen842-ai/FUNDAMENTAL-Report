@@ -181,8 +181,19 @@
         return cleanStr;
     };
 
-    const getCdm = (cleanKam) => {
-        if (typeof cdmMap !== 'undefined' && cdmMap[cleanKam]) return cdmMap[cleanKam];
+    // Hàm lấy CDM theo đúng chuẩn map: {"Khu vực|KAM": "CDM"}
+    const getCdm = (cleanKam, areaName) => {
+        if (typeof cdmMap !== 'undefined') {
+            let exactAreaKey = String(areaName || "").trim() + "|" + cleanKam;
+            let upperAreaKey = String(areaName || "").toUpperCase().trim() + "|" + cleanKam;
+            
+            // Tìm theo "Khu vực|KAM" trước
+            if (cdmMap[exactAreaKey]) return cdmMap[exactAreaKey];
+            if (cdmMap[upperAreaKey]) return cdmMap[upperAreaKey];
+            
+            // Tìm theo KAM độc lập (dự phòng)
+            if (cdmMap[cleanKam]) return cdmMap[cleanKam];
+        }
         return "Chưa phân bổ CDM";
     };
 
@@ -208,7 +219,7 @@
             
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam);
+            d.cdm = getCdm(d.kam, d.area); // Truyền area vào để quét đúng CDM Map
             d.kae = cleanName(d.kae, false, d.area);
         });
 
@@ -218,7 +229,7 @@
             d.month = (d.month || "").toString().trim();
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam);
+            d.cdm = getCdm(d.kam, d.area); // Truyền area vào để quét đúng CDM Map
             d.kae = cleanName(d.kae, false, d.area);
             
             // Xử lý Cat (Category / Brand)
@@ -445,83 +456,99 @@
 </script>
 
 <!-- ======================================================================
-     SUPABASE SECURE LOADER SCRIPT 
+     SUPABASE SECURE LOADER SCRIPT (NÂNG CẤP BẮT LỖI GITHUB)
      ====================================================================== -->
 <script>
 (async function () {
-    function handleFatalError(source) {
+    function handleFatalError(title, subtitle) {
         var loaderText = document.querySelector('.loader-text');
         var spinner = document.querySelector('.spinner-container');
         
         if(spinner) spinner.style.display = 'none';
         if(loaderText) {
-            loaderText.innerHTML = '<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ LỖI BẢO MẬT HOẶC KẾT NỐI<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">Không có quyền truy cập: <b>' + source + '</b><br>Vui lòng quay lại Trang Hub để đăng nhập!</span></span>';
+            loaderText.innerHTML = `<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ ${title}<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">${subtitle}</span></span>`;
         }
     }
 
     if (!window.supabase) {
-        handleFatalError("Thư viện Supabase CDN");
+        handleFatalError("LỖI THƯ VIỆN", "Không thể tải thư viện Supabase CDN. Vui lòng kiểm tra mạng.");
         return;
     }
 
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     const BUCKET_NAME = 'data';
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
 
     try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session) {
-            alert("Phiên làm việc hết hạn hoặc chưa đăng nhập. Đang chuyển về Trang Hub...");
             window.location.href = HUB_URL;
             return; 
         }
 
         var version = '?t=' + new Date().getTime();
-        // Cập nhật mảng localScripts tải thêm cdmMap.js
-        var localScripts = ['kamMap.js' + version, 'cdmMap.js' + version]; 
+        var localScripts = ['kamMap.js', 'cdmMap.js']; // Các map nội bộ GitHub
         var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
 
         const { data: signedUrlsData, error } = await supabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrls(secureDataFiles, 60);
+            .from(BUCKET_NAME)
+            .createSignedUrls(secureDataFiles, 60);
 
         if (error || !signedUrlsData) throw error;
 
-        var scriptsToLoad = [...localScripts];
+        var scriptsToLoad = [];
+        localScripts.forEach(file => scriptsToLoad.push({ url: file + version, type: 'local' }));
         signedUrlsData.forEach(item => {
-            if (item.error) throw new Error("Không có quyền đọc file: " + item.path);
-            scriptsToLoad.push(item.signedUrl); 
+            if (item.error) throw new Error(item.path);
+            scriptsToLoad.push({ url: item.signedUrl, type: 'secure' });
         });
 
         var loadedScripts = 0;
         var hasError = false;
 
-        scriptsToLoad.forEach(function(src) {
+        scriptsToLoad.forEach(function(item) {
             var script = document.createElement('script');
-            script.src = src;
+            script.src = item.url;
             
             script.onload = function() {
                 if (hasError) return;
                 loadedScripts++;
+                // Chống sập nếu file map trống
+                if (item.url.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
+                if (item.url.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
+
                 if (loadedScripts === scriptsToLoad.length) {
                     if (typeof init === 'function') init();
                 }
             };
             
             script.onerror = function() {
-                hasError = true;
-                handleFatalError(src.split('?')[0].substring(0, 60) + '...'); 
+                // Bỏ qua lỗi 404 cho file map trên Github (giúp trang vẫn sống)
+                if (item.type === 'local') {
+                    console.warn("Chưa tìm thấy hoặc lỗi tải file map: " + item.url);
+                    if (item.url.includes('cdmMap')) window.cdmMap = {}; 
+                    if (item.url.includes('kamMap')) window.kamMap = {};
+                    
+                    loadedScripts++;
+                    if (loadedScripts === scriptsToLoad.length && !hasError) {
+                        if (typeof init === 'function') init();
+                    }
+                } 
+                else {
+                    hasError = true;
+                    let fileName = item.url.split('?')[0].substring(0, 50) + '...';
+                    handleFatalError("LỖI KẾT NỐI DỮ LIỆU", `Không có quyền truy cập file bảo mật: <b>${fileName}</b><br>Vui lòng tải lại trang hoặc quay lại Trang Hub.`); 
+                }
             };
             
             document.body.appendChild(script);
         });
 
     } catch (err) {
-        console.error("Lỗi xác thực hoặc tải file:", err);
-        handleFatalError("Dữ liệu bảo mật (Access Denied)");
+        console.error("Lỗi:", err);
+        handleFatalError("LỖI BẢO MẬT", "Không có quyền truy cập dữ liệu (Access Denied). Vui lòng đăng nhập lại qua Trang Hub.");
     }
 })();
 </script>
