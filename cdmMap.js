@@ -28,7 +28,7 @@ const cdmMap = {
 "3. NORTH WEST|NGUYỄN NGỌC LONG": "PHẠM QUỐC TOẢN",
 "1. HA NOI|PHẠM VĂN QUÂN": "KAM ĐẶC BIỆT",
 "1. HA NOI|VŨ TUYẾT HIỀN": "KAM ĐẶC BIỆT",
-"4. North East|NGUYỄN ĐÌNH THÁI": "KAM ĐẶC BIỆT",
+"4. NORTH EAST|NGUYỄN ĐÌNH THÁI": "KAM ĐẶC BIỆT",
 "3. SOUTH MEKONG|TRẦN THANH NHÃ": "KAM ĐẶC BIỆT",
 "4. EASTERN|VÕ THỊ THANH TRÀ": "KAM ĐẶC BIỆT",
 
