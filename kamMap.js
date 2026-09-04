@@ -16,5 +16,6 @@ const kamMap = {
 "3. SOUTH MEKONG|HUỲNH VĂN TÍNH": "NGUYỄN TRUNG HIẾU",
 "5. HLEC|NGUYỄN HOÀNG TRÂN": "HỒ VĂN TIẾN",
 "2. NORTH COAST|CDM TOẢN": "NGUYỄN THANH QUỲNH",
+"5. HLEC|VŨ NGỌC HẢI": "HỒ VĂN TIẾN",
 
 };
