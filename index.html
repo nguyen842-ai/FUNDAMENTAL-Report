@@ -46,6 +46,11 @@
         .set-btn { padding: 6px 12px; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--text-main); border-radius: var(--radius-md); font-weight: 600; transition: 0.2s; font-size: 0.95em;}
         .set-btn:hover { background: var(--badge-bg); }
         .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        
+        /* Nút Refresh Data nổi bật */
+        .btn-refresh { color: var(--warning-border); border-color: var(--warning-border); display: flex; align-items: center; gap: 5px;}
+        .btn-refresh:hover { background: var(--warning-bg); color: #ea580c; border-color: #ea580c;}
+
         input[type="range"] { cursor: pointer; max-width: 80px;}
 
         .status-divider { height: 24px; width: 1px; background: var(--border); margin: 0 3px; }
@@ -149,6 +154,14 @@
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
                 </div>
                 <div class="status-divider"></div>
+                <!-- NÚT LÀM MỚI DATA -->
+                <div class="set-group">
+                    <button class="set-btn btn-refresh" onclick="forceRefreshData()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.31l5.67-5.67"/></svg>
+                        <span data-i18n="btn_refresh">Làm mới Data</span>
+                    </button>
+                </div>
+                <div class="status-divider"></div>
                 <div class="set-group">
                     <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
@@ -198,6 +211,7 @@
     // ======================================================================
     // 0. BIẾN TOÀN CỤC & TÍNH NGÀY THÁNG
     // ======================================================================
+    const CACHE_DB_VERSION = 'RTM_Cache_DB_V5'; // NÂNG CẤP XÓA SẠCH LỖI CŨ
     let dbMaster = [], dbSales = [];
     
     let statusMap = {}; 
@@ -230,7 +244,9 @@
             st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_proc: "Đang xử lý...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
             no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại",
             inactive_staff: "Nhân sự thôi việc / Không hoạt động",
-            special_perf: "Special Performance"
+            special_perf: "Special Performance",
+            btn_refresh: "Làm mới Data",
+            confirm_refresh: "Xóa bộ nhớ đệm và tải lại dữ liệu mới nhất từ hệ thống?"
         },
         en: {
             title: "FUNDAMENTAL REPORT", desc: "Last updated: ",
@@ -238,7 +254,9 @@
             st_init: "Initializing...", st_load: "Loading data...", st_proc: "Processing...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
             no_data: "No valid data matches the current filters",
             inactive_staff: "Resigned / Inactive Staff",
-            special_perf: "Special Performance"
+            special_perf: "Special Performance",
+            btn_refresh: "Refresh Data",
+            confirm_refresh: "Clear cache and fetch the latest data from server?"
         }
     };
 
@@ -286,6 +304,15 @@
         }, 10); 
     }
 
+    // Nút Xóa Cache thủ công
+    function forceRefreshData() {
+        if(confirm(dict[currentLang]['confirm_refresh'])) {
+            let req = indexedDB.deleteDatabase(CACHE_DB_VERSION);
+            req.onsuccess = function () { location.reload(); };
+            req.onerror = function () { location.reload(); };
+        }
+    }
+
     const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
     const fmtPct = (n) => (n || 0).toFixed(1) + '%';
     const fmtFloat = (n) => (n || 0).toFixed(1);
@@ -298,7 +325,7 @@
         return 0;
     }
 
-    // TÁCH ICON BẰNG REGEX (BẮT BUỘC TRACK 100% CẢ NHỮNG NGƯỜI KHÔNG CÓ ICON)
+    // TÁCH ICON BẰNG REGEX & LUÔN TRACK TẤT CẢ MỌI NGƯỜI
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
         let match = raw.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
@@ -319,7 +346,6 @@
             }
         }
         
-        // Luôn theo dõi tháng xuất hiện mới nhất của nhân sự (kể cả không có icon)
         if (monthStr && cleanStr) {
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanStr] || statusTracker[cleanStr].month < mIdx) {
@@ -361,7 +387,7 @@
     };
 
     // ======================================================================
-    // 3. ENGINE XỬ LÝ (TÍCH HỢP CACHE VÀ LỌC DOVEMEN)
+    // 3. ENGINE XỬ LÝ 
     // ======================================================================
     function init(useCache = false) {
         updateStatus('st_proc', '--primary');
@@ -421,18 +447,14 @@
         TIME_COLS = Array.from(activeMonths).sort((a,b) => getMonthIndex(a) - getMonthIndex(b));
         CATS = Array.from(activeCats).sort();
 
-        // ---------------------------------------------------------
-        // CHỐT TRẠNG THÁI: AI KHÔNG CÓ TÊN Ở THÁNG CUỐI -> ÉP DẤU ❌
-        // ---------------------------------------------------------
+        // ÉP DẤU ❌ CHO NHỮNG NHÂN SỰ KHÔNG CÓ TRONG THÁNG MỚI NHẤT
         if (TIME_COLS.length > 0) {
             let latestGlobalMonthIdx = getMonthIndex(TIME_COLS[TIME_COLS.length - 1]);
             for (let name in statusTracker) {
                 if (statusTracker[name].month < latestGlobalMonthIdx) {
                     statusMap[name] = '❌'; 
                 } else {
-                    if (statusTracker[name].icon) {
-                        statusMap[name] = statusTracker[name].icon;
-                    }
+                    if (statusTracker[name].icon) statusMap[name] = statusTracker[name].icon;
                 }
             }
         }
@@ -478,7 +500,7 @@
     }
 
     // ======================================================================
-    // 5. THUẬT TOÁN TÍNH TỐI ƯU O(N) TÁCH THEO TỪNG NHÂN SỰ
+    // 5. THUẬT TOÁN TÍNH TỐI ƯU O(N)
     // ======================================================================
     function switchMainTab(tabId, btn) {
         currentMainTab = tabId;
@@ -551,7 +573,7 @@
     }
 
     // ======================================================================
-    // 6. RENDER GIAO DIỆN (CÓ NHÓM ĐẶC BIỆT CHO KAM BÁN HÀNG TẠI DÒNG KAE)
+    // 6. RENDER GIAO DIỆN CÓ GOM NHÓM
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
@@ -634,7 +656,6 @@
 
         let finalHtml = buildListHtml(activeEntities);
 
-        // 1. Accordion cho Nhóm Special Performance (KAM bán hàng)
         if (specialEntities.length > 0) {
             let specialHtml = buildListHtml(specialEntities);
             if (specialHtml) {
@@ -649,7 +670,6 @@
             }
         }
 
-        // 2. Accordion cho Nhóm Nghỉ Việc
         if (inactiveEntities.length > 0) {
             let inactiveHtml = buildListHtml(inactiveEntities);
             if (inactiveHtml) {
@@ -669,11 +689,11 @@
 </script>
 
 <!-- ======================================================================
-     7. INDEXED-DB CACHE V4 & SUPABASE LOADER
+     7. INDEXED-DB CACHE V5 & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
-    const CACHE_DB = 'RTM_Cache_DB_V4'; // BẢN V4 XÓA KÝ ỨC CŨ
+    const CACHE_DB = 'RTM_Cache_DB_V5'; 
     const CACHE_STORE = 'datasets';
     const CACHE_KEY = 'daily_rtm_data';
 
