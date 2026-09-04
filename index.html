@@ -41,15 +41,14 @@
         .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;}
         .header h1 { margin: 0; font-size: 1.5em; color: var(--header-color); text-transform: uppercase; font-weight: 700; letter-spacing: -0.5px;}
 
-        .settings-content { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .settings-content { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
         .set-group { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-sub); }
         .set-btn { padding: 6px 12px; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--text-main); border-radius: var(--radius-md); font-weight: 600; transition: 0.2s; font-size: 0.95em;}
         .set-btn:hover { background: var(--badge-bg); }
         .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         input[type="range"] { cursor: pointer; max-width: 80px;}
 
-        /* Status Bar Mới gộp chung trên Header */
-        .status-divider { height: 24px; width: 1px; background: var(--border); margin: 0 5px; }
+        .status-divider { height: 24px; width: 1px; background: var(--border); margin: 0 3px; }
         .status-badge { font-weight: 700; padding: 4px 10px; border-radius: 6px; background: var(--badge-bg); transition: 0.3s;}
 
         /* =========================================================
@@ -75,24 +74,28 @@
         .sub-tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);}
 
         /* =========================================================
-           5. BẢNG HIỂN THỊ
+           5. BẢNG HIỂN THỊ (TÁCH BẢNG)
            ========================================================= */
         #table-wrapper-main { transition: opacity 0.2s ease; }
         
-        .table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); max-height: 600px; margin-bottom: 40px; transition: 0.3s;}
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; font-size: 1em; }
+        .entity-section { margin-bottom: 35px; }
+        .entity-title {
+            background: var(--header-color); color: #ffffff; padding: 12px 20px; border-radius: var(--radius-md) var(--radius-md) 0 0;
+            margin: 0; font-size: 1.1em; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;
+        }
+
+        .table-container { background: var(--white); border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); border-top: none; max-height: 500px;}
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; font-size: 1em; }
         th, td { padding: 14px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
         th:last-child, td:last-child { border-right: none; }
         
         th { background: var(--table-header); font-weight: 700; color: var(--text-main); position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 11px;}
         td { color: var(--text-main); }
         
-        /* Sticky Cột bên trái */
         .col-sticky-1 { position: sticky; left: 0; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700;}
-        .col-sticky-2 { position: sticky; left: 100px; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700; color: var(--primary);}
-        .col-sticky-3 { position: sticky; left: 250px; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700; color: var(--warning-border);}
+        .col-sticky-2 { position: sticky; left: 100px; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700; color: var(--warning-border);}
         
-        th.col-sticky-1, th.col-sticky-2, th.col-sticky-3 { background: var(--table-header); z-index: 15; }
+        th.col-sticky-1, th.col-sticky-2 { background: var(--table-header); z-index: 15; }
         
         .metric-name { text-align: left !important; font-weight: 600; color: var(--text-sub); }
         .row-highlight { background: rgba(59, 130, 246, 0.03); }
@@ -126,10 +129,9 @@
                 <!-- Cỡ chữ -->
                 <div class="set-group">
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
-                    <span id="fontValue" style="min-width: 35px;">13px</span>
                 </div>
                 <div class="status-divider"></div>
-                <!-- Trạng thái -->
+                <!-- Trạng thái dời lên đây -->
                 <div class="set-group">
                     <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
@@ -173,10 +175,8 @@
         <button class="sub-tab-btn" onclick="switchSubTab('kae', this)">BY SALES TEAM</button>
     </div>
 
-    <!-- VÙNG RENDER BẢNG DUY NHẤT -->
-    <div id="table-wrapper-main">
-        <!-- Javascript sẽ đổ bảng vào đây -->
-    </div>
+    <!-- VÙNG RENDER BẢNG (MỖI NHÂN SỰ 1 BẢNG) -->
+    <div id="table-wrapper-main"></div>
 
 </div>
 
@@ -205,18 +205,13 @@
         currentLang = lang;
         document.getElementById('btn-en').classList.toggle('active', lang === 'en');
         document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
-        
         document.querySelectorAll('[data-i18n]').forEach(el => {
             let key = el.getAttribute('data-i18n');
             if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
         });
-        
         if(dbMaster.length > 0) renderActiveTab();
     }
 
-    // ======================================================================
-    // 2. UI CÀI ĐẶT
-    // ======================================================================
     function changeTheme(theme) {
         if (theme === 'dark') document.body.classList.add('dark-mode');
         else document.body.classList.remove('dark-mode');
@@ -224,10 +219,7 @@
         document.getElementById('btn-light').classList.toggle('active', theme === 'light');
     }
 
-    function changeFontSize(val) {
-        document.body.style.fontSize = val + 'px';
-        document.getElementById('fontValue').innerText = val + 'px';
-    }
+    function changeFontSize(val) { document.body.style.fontSize = val + 'px'; }
 
     function updateStatus(textKey, colorVar) {
         let st = document.getElementById('st-supa');
@@ -235,25 +227,21 @@
         st.style.color = colorVar ? `var(${colorVar})` : 'var(--text-main)';
     }
 
-    // Cơ chế Yield (Nhường luồng giao diện) để render Loading
     function executeWithLoading(callback) {
         updateStatus('st_proc', '--primary');
-        document.getElementById('table-wrapper-main').style.opacity = '0.5';
-        
+        document.getElementById('table-wrapper-main').style.opacity = '0.4';
         setTimeout(() => {
             callback();
             document.getElementById('table-wrapper-main').style.opacity = '1';
             updateStatus('st_done', '--color-tot');
-        }, 30); // Dành 30ms cho trình duyệt vẽ trạng thái Loading
+        }, 10); 
     }
 
     // ======================================================================
-    // 3. BIẾN TOÀN CỤC & TIỀN XỬ LÝ
+    // 2. BIẾN TOÀN CỤC & HÀM XỬ LÝ CHUỖI
     // ======================================================================
     let dbMaster = [], dbSales = [];
-    let currentMainTab = 'tab_overview';
-    let currentSubTab = 'cdm';
-    
+    let currentMainTab = 'tab_overview', currentSubTab = 'cdm';
     let TIME_COLS = [], CATS = []; 
     const METRICS = ["Coverage (outlets)", "Active Outlets", "Active Rate (%)", "AVG SKU/ invoice", "AVG Value/ invoice (VND)", "Performance (VND)"];
     const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
@@ -286,46 +274,60 @@
         return "Chưa phân bổ CDM";
     };
 
-    function init() {
-        updateStatus('st_load', '--primary');
-        dbMaster = []; dbSales = [];
-        if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
-        if (typeof dbMasterM6 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM6); dbSales = dbSales.concat(dbSalesM6); }
-        if (typeof dbMasterM7 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM7); dbSales = dbSales.concat(dbSalesM7); }
-        if (typeof dbMasterM8 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM8); dbSales = dbSales.concat(dbSalesM8); }
-
+    // ======================================================================
+    // 3. ENGINE XỬ LÝ (TÍCH HỢP CACHE VÀ LỌC DOVEMEN)
+    // ======================================================================
+    function init(useCache = false) {
+        updateStatus('st_proc', '--primary');
+        
         let activeMonths = new Set(), activeCats = new Set();
+        dbMaster = []; dbSales = [];
 
-        dbMaster.forEach(d => {
+        // Nếu xài Cache thì dùng rawMaster, rawSales. Nếu không thì ghép từ các file dbMasterM5...
+        let rawMasterData = useCache ? window.rawMasterCache : [];
+        let rawSalesData = useCache ? window.rawSalesCache : [];
+
+        if (!useCache) {
+            if (typeof dbMasterM5 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM5); rawSalesData = rawSalesData.concat(dbSalesM5); }
+            if (typeof dbMasterM6 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM6); rawSalesData = rawSalesData.concat(dbSalesM6); }
+            if (typeof dbMasterM7 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM7); rawSalesData = rawSalesData.concat(dbSalesM7); }
+            if (typeof dbMasterM8 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM8); rawSalesData = rawSalesData.concat(dbSalesM8); }
+            // Cất vào biến Window để Save Cache
+            window.rawMasterCache = rawMasterData;
+            window.rawSalesCache = rawSalesData;
+        }
+
+        // 1. Quét dbMaster
+        rawMasterData.forEach(d => {
             if(!d || !d.cusCode) return;
             d.month = (d.month || "").toString().trim();
             if(d.month) activeMonths.add(d.month);
-            
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             d.kam = cleanName(d.kam, true, d.area);
             d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
+            dbMaster.push(d);
         });
 
-        let filteredSales = [];
-        dbSales.forEach(d => {
+        // 2. Quét dbSales (Chặn DISPLAY và DOVEMEN)
+        rawSalesData.forEach(d => {
             if(!d || !d.cusCode) return;
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
-                if (catName === 'DISPLAY') return; 
+                // BỎ QUA 2 NHÓM NÀY:
+                if (catName === 'DISPLAY' || catName === 'DOVEMEN') return; 
+                
                 d.cat = catName;
                 activeCats.add(catName);
             }
-
             d.month = (d.month || "").toString().trim();
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             d.kam = cleanName(d.kam, true, d.area);
             d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
             d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
-            filteredSales.push(d);
+            dbSales.push(d);
         });
-        dbSales = filteredSales;
 
         TIME_COLS = Array.from(activeMonths).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99));
         CATS = Array.from(activeCats).sort();
@@ -344,18 +346,12 @@
     }
 
     function populateDropdown(id, options) {
-        let sel = document.getElementById(id);
-        sel.innerHTML = `<option value="ALL">-- Tất cả --</option>` + options.filter(Boolean).sort().map(o => `<option value="${o}">${o}</option>`).join('');
+        document.getElementById(id).innerHTML = `<option value="ALL">-- Tất cả --</option>` + options.filter(Boolean).sort().map(o => `<option value="${o}">${o}</option>`).join('');
     }
 
     function getVal(id) { return document.getElementById(id).value; }
     
-    function userTriggerUpdate(changedLevel) {
-        executeWithLoading(() => {
-            updateDropdowns(changedLevel);
-            renderActiveTab();
-        });
-    }
+    function userTriggerUpdate(changedLevel) { executeWithLoading(() => { updateDropdowns(changedLevel); renderActiveTab(); }); }
 
     function updateDropdowns(changedLevel) {
         let selArea = getVal('flt-area'), selCdm = getVal('flt-cdm'), selKam = getVal('flt-kam');
@@ -364,7 +360,6 @@
             (changedLevel === 'area' || selCdm === 'ALL' || d.cdm === selCdm) &&
             ((changedLevel === 'area' || changedLevel === 'cdm') || selKam === 'ALL' || d.kam === selKam)
         );
-
         if (changedLevel === 'area') {
             populateDropdown('flt-cdm', [...new Set(filtered.map(d => d.cdm))]);
             populateDropdown('flt-kam', [...new Set(filtered.map(d => d.kam))]);
@@ -378,7 +373,7 @@
     }
 
     // ======================================================================
-    // 5. ĐIỀU HƯỚNG TABS & TÍNH TOÁN DATA (SIÊU TỐI ƯU O(N))
+    // 5. THUẬT TOÁN TÍNH TỐI ƯU O(N) TÁCH THEO TỪNG NHÂN SỰ
     // ======================================================================
     function switchMainTab(tabId, btn) {
         currentMainTab = tabId;
@@ -395,25 +390,11 @@
     }
 
     function compileData(isTab2, groupKey) {
-        let dataMap = {};
-        let entityCov = {}; // Lưu Coverage gốc
+        let entities = {}; 
+        let entityCov = {};
         let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae'), fCat = getVal('flt-cat');
 
-        function initEntityCov(eName) {
-            if (!entityCov[eName]) {
-                entityCov[eName] = { m: {} };
-                TIME_COLS.forEach(m => entityCov[eName].m[m] = new Set());
-            }
-        }
-
-        function initBlock(key, areaStr, entityStr, brandStr = null) {
-            if (!dataMap[key]) {
-                dataMap[key] = { area: areaStr, entity: entityStr, brand: brandStr, m: {} };
-                TIME_COLS.forEach(m => dataMap[key].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
-            }
-        }
-
-        // 1. Quét dbMaster ĐÚNG 1 LẦN 
+        // LƯỢT 1: Quét Coverage 1 lần duy nhất cho Entity
         dbMaster.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -421,23 +402,14 @@
             if (fKae !== 'ALL' && d.kae !== fKae) return;
 
             let eName = d[groupKey];
-            
-            // Chỉ đếm khách hàng cho Entity 1 lần
-            initEntityCov(eName);
-            if (TIME_COLS.includes(d.month)) entityCov[eName].m[d.month].add(d.cusCode);
-
-            if (!isTab2) {
-                initBlock(eName, d.area, eName);
-            } else {
-                CATS.forEach(c => {
-                    if (fCat !== 'ALL' && c !== fCat) return; 
-                    let compKey = eName + '|' + c;
-                    initBlock(compKey, d.area, eName, c);
-                });
+            if (!entityCov[eName]) {
+                entityCov[eName] = { area: d.area, m: {} };
+                TIME_COLS.forEach(m => entityCov[eName].m[m] = new Set());
             }
+            if (TIME_COLS.includes(d.month)) entityCov[eName].m[d.month].add(d.cusCode);
         });
 
-        // 2. Quét dbSales
+        // LƯỢT 2: Quét Sales cho các Brand/Overview
         dbSales.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -446,89 +418,146 @@
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
-            let compKey = isTab2 ? (eName + '|' + d.cat) : eName;
+            if (!entities[eName]) entities[eName] = { area: d.area, brands: {} };
+
+            let bKey = isTab2 ? d.cat : 'OVERVIEW';
             
-            if (dataMap[compKey] && TIME_COLS.includes(d.month)) {
-                let mx = dataMap[compKey].m[d.month];
+            if (!entities[eName].brands[bKey]) {
+                entities[eName].brands[bKey] = { m: {} };
+                TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
+            }
+
+            if (TIME_COLS.includes(d.month)) {
+                let mx = entities[eName].brands[bKey].m[d.month];
                 mx.actSet.add(d.cusCode);
-                mx.sales += (d.sales || 0); 
-                mx.skus += (d.skuLines || 0); 
-                mx.invSet.add(d.invId);
+                mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
             }
         });
 
-        return { dataMap, entityCov };
+        // Đảm bảo những người có Coverage nhưng không có Sales vẫn hiện bảng trong Tab 1
+        if (!isTab2) {
+            Object.keys(entityCov).forEach(eName => {
+                if (!entities[eName]) entities[eName] = { area: entityCov[eName].area, brands: {} };
+                if (!entities[eName].brands['OVERVIEW']) {
+                     entities[eName].brands['OVERVIEW'] = { m: {} };
+                     TIME_COLS.forEach(m => entities[eName].brands['OVERVIEW'].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
+                }
+            });
+        }
+
+        return { entities, entityCov };
     }
 
     // ======================================================================
-    // 6. RENDER HTML BẢNG
+    // 6. TÁCH BẢNG & RENDER UI
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
         let container = document.getElementById('table-wrapper-main');
-        
-        let labelMap = { 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE/DSR' };
+        let labelMap = { 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE' };
         let entityLabel = labelMap[currentSubTab];
 
-        let { dataMap, entityCov } = compileData(isTab2, currentSubTab);
-        let keys = Object.keys(dataMap).sort();
+        let { entities, entityCov } = compileData(isTab2, currentSubTab);
+        let eNames = Object.keys(entities).sort();
 
-        if (keys.length === 0) {
-            container.innerHTML = `<div class="table-container" style="padding:40px; text-align:center; color: var(--text-sub); font-size: 1.1em;">${dict[currentLang]['no_data']}</div>`;
+        if (eNames.length === 0) {
+            container.innerHTML = `<div class="table-container" style="padding:40px; text-align:center; color:var(--text-sub); border:none; box-shadow:none;">${dict[currentLang]['no_data']}</div>`;
             return;
         }
 
-        let html = `<div class="table-container"><table><thead><tr>
+        let html = '';
+
+        eNames.forEach(eName => {
+            let entityData = entities[eName];
+            let brands = Object.keys(entityData.brands).sort();
+            
+            // Tab 2: Nếu NV không bán được Brand nào thì không cần hiện bảng rỗng
+            if (isTab2 && brands.length === 0) return;
+
+            html += `<div class="entity-section">`;
+            html += `<h3 class="entity-title">${entityLabel}: ${eName}</h3>`;
+            html += `<div class="table-container"><table><thead><tr>
                         <th class="col-sticky-1" style="width: 100px;">Area</th>
-                        <th class="col-sticky-2" style="width: 150px;">${entityLabel}</th>
-                        ${isTab2 ? '<th class="col-sticky-3" style="width: 120px;">Brand</th>' : ''}
-                        <th style="width: 220px; text-align: left;">Fundamental</th>
+                        ${isTab2 ? '<th class="col-sticky-2" style="width: 150px;">Brand</th>' : ''}
+                        <th style="width: 250px; text-align: left;">Fundamental</th>
                         ${TIME_COLS.map(m => `<th>${m}</th>`).join('')}
                     </tr></thead><tbody>`;
 
-        keys.forEach(k => {
-            let rowData = dataMap[k];
-            let eName = rowData.entity; 
-
-            for(let i=0; i<6; i++) {
-                let rHtml = '';
-                if (i === 0) {
-                    rHtml += `<td rowspan="6" class="col-sticky-1">${rowData.area}</td>`;
-                    rHtml += `<td rowspan="6" class="col-sticky-2">${rowData.entity}</td>`;
-                    if(isTab2) rHtml += `<td rowspan="6" class="col-sticky-3">${rowData.brand}</td>`;
+            brands.forEach(bName => {
+                let bData = entityData.brands[bName];
+                
+                for(let i=0; i<6; i++) {
+                    let rHtml = '';
+                    if (i === 0) {
+                        rHtml += `<td rowspan="6" class="col-sticky-1">${entityData.area}</td>`;
+                        if (isTab2) rHtml += `<td rowspan="6" class="col-sticky-2" style="color:var(--warning-border);">${bName}</td>`;
+                    }
+                    
+                    rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
+                    
+                    TIME_COLS.forEach(m => {
+                        let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
+                        let mx = bData.m[m];
+                        let act = mx.actSet.size, sls = mx.sales, invs = mx.invSet.size, skus = mx.skus;
+                        
+                        let val = 0;
+                        if (i === 0) val = fmt(cov); 
+                        else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
+                        else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
+                        else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
+                        else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
+                        else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
+                        rHtml += `<td>${val}</td>`;
+                    });
+                    html += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
                 }
-                
-                rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
-                
-                TIME_COLS.forEach(m => {
-                    let dM = rowData.m[m];
-                    
-                    // LẤY COVERAGE GỐC TỪ entityCov THAY VÌ ĐẾM LẠI
-                    let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
-                    
-                    let act = dM.actSet.size, sls = dM.sales, invs = dM.invSet.size, skus = dM.skus;
-                    let val = 0;
-                    if (i === 0) val = fmt(cov); 
-                    else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
-                    else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
-                    else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
-                    else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
-                    else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
-                    rHtml += `<td>${val}</td>`;
-                });
-                html += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
-            }
+            });
+            html += `</tbody></table></div></div>`;
         });
-        html += `</tbody></table></div>`;
-        container.innerHTML = html;
+
+        container.innerHTML = html || `<div class="table-container" style="padding:40px; text-align:center;">${dict[currentLang]['no_data']}</div>`;
     }
 </script>
 
 <!-- ======================================================================
-     SUPABASE SECURE LOADER SCRIPT 
+     7. INDEXED-DB CACHE & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
+    const CACHE_DB = 'RTM_Cache_DB';
+    const CACHE_STORE = 'datasets';
+    const CACHE_KEY = 'daily_rtm_data';
+
+    // Helper mở IndexedDB
+    function getDB() {
+        return new Promise((resolve, reject) => {
+            let req = indexedDB.open(CACHE_DB, 1);
+            req.onupgradeneeded = e => e.target.result.createObjectStore(CACHE_STORE);
+            req.onsuccess = e => resolve(e.target.result);
+            req.onerror = e => reject(e.target.error);
+        });
+    }
+
+    async function loadFromCache() {
+        try {
+            let db = await getDB();
+            return new Promise((resolve, reject) => {
+                let tx = db.transaction(CACHE_STORE, 'readonly');
+                let req = tx.objectStore(CACHE_STORE).get(CACHE_KEY);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+        } catch(e) { return null; }
+    }
+
+    async function saveToCache(dataObj) {
+        try {
+            let db = await getDB();
+            let tx = db.transaction(CACHE_STORE, 'readwrite');
+            tx.objectStore(CACHE_STORE).put(dataObj, CACHE_KEY);
+        } catch(e) { console.warn("Không thể lưu cache.", e); }
+    }
+
     function handleFatalError(title, subtitle) {
         updateStatus('st_err', '--color-khong-hq');
         alert(`${title}\n${subtitle}`);
@@ -543,13 +572,38 @@
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
 
     try {
+        updateStatus('st_load', '--primary');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session) { window.location.href = HUB_URL; return; }
 
+        let todayStr = new Date().toDateString();
+        let cachedData = await loadFromCache();
         var version = '?t=' + new Date().getTime();
         var localScripts = ['kamMap.js', 'cdmMap.js'];
-        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
 
+        // NẾU CÓ CACHE HÔM NAY -> BỎ QUA SUPABASE, CHỈ TẢI MAP TỪ GITHUB
+        if (cachedData && cachedData.date === todayStr) {
+            window.rawMasterCache = cachedData.rawMaster;
+            window.rawSalesCache = cachedData.rawSales;
+
+            let mapLoaded = 0;
+            localScripts.forEach(file => {
+                let script = document.createElement('script');
+                script.src = file + version;
+                script.onload = script.onerror = () => {
+                    mapLoaded++;
+                    if (file.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
+                    if (file.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
+                    if (mapLoaded === localScripts.length) init(true); // True = Dùng Cache
+                };
+                document.body.appendChild(script);
+            });
+            return;
+        }
+
+        // NẾU KHÔNG CÓ CACHE -> KÉO TỪ SUPABASE
+        updateStatus('st_proc', '--primary');
+        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
         const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
         if (error || !signedUrlsData) throw error;
 
@@ -560,9 +614,7 @@
             scriptsToLoad.push({ url: item.signedUrl, type: 'secure' });
         });
 
-        var loadedScripts = 0;
-        var hasError = false;
-
+        var loadedScripts = 0, hasError = false;
         scriptsToLoad.forEach(function(item) {
             var script = document.createElement('script');
             script.src = item.url;
@@ -571,15 +623,21 @@
                 loadedScripts++;
                 if (item.url.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
                 if (item.url.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
-                if (loadedScripts === scriptsToLoad.length) { if (typeof init === 'function') init(); }
+                if (loadedScripts === scriptsToLoad.length) {
+                    init(false); // False = Không dùng Cache, quét lần đầu
+                    // Lưu Cache cho lần sau
+                    saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
+                }
             };
             script.onerror = function() {
                 if (item.type === 'local') {
-                    console.warn("Chưa tìm thấy map: " + item.url);
                     if (item.url.includes('cdmMap')) window.cdmMap = {}; 
                     if (item.url.includes('kamMap')) window.kamMap = {};
                     loadedScripts++;
-                    if (loadedScripts === scriptsToLoad.length && !hasError) { if (typeof init === 'function') init(); }
+                    if (loadedScripts === scriptsToLoad.length && !hasError) {
+                        init(false);
+                        saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
+                    }
                 } else {
                     hasError = true;
                     handleFatalError("LỖI KẾT NỐI", `Truy cập file bảo mật bị từ chối.`); 
