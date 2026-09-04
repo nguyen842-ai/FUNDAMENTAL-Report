@@ -211,7 +211,7 @@
         let activeMonths = new Set();
         let activeCats = new Set();
 
-        // Tiền xử lý dbMaster
+        // 1. Tiền xử lý dbMaster
         dbMaster.forEach(d => {
             if(!d || !d.cusCode) return;
             d.month = (d.month || "").toString().trim();
@@ -219,28 +219,40 @@
             
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam, d.area); // Truyền area vào để quét đúng CDM Map
+            d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
         });
 
-        // Tiền xử lý dbSales
+        // 2. Tiền xử lý dbSales
+        let filteredSales = [];
         dbSales.forEach(d => {
             if(!d || !d.cusCode) return;
-            d.month = (d.month || "").toString().trim();
-            d.area = d.area ? String(d.area).trim() : "Unknown Area";
-            d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam, d.area); // Truyền area vào để quét đúng CDM Map
-            d.kae = cleanName(d.kae, false, d.area);
             
-            // Xử lý Cat (Category / Brand)
+            // Xử lý Cat (Category / Brand) & LOẠI BỎ CATEGORY LÀ "DISPLAY"
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
+                // Lọc bỏ ngay nếu là hàng trưng bày
+                if (catName === 'DISPLAY') return; 
+                
                 d.cat = catName;
                 activeCats.add(catName);
             }
+
+            d.month = (d.month || "").toString().trim();
+            d.area = d.area ? String(d.area).trim() : "Unknown Area";
+            d.kam = cleanName(d.kam, true, d.area);
+            d.cdm = getCdm(d.kam, d.area); 
+            d.kae = cleanName(d.kae, false, d.area);
+            
             // Hóa đơn ID
             d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
+            
+            // Lưu lại vào mảng data sạch
+            filteredSales.push(d);
         });
+        
+        // Cập nhật lại biến dbSales chỉ chứa Data không có "DISPLAY"
+        dbSales = filteredSales;
 
         // Gán mảng TIME_COLS động dựa trên dữ liệu thật (Sắp xếp theo tháng)
         TIME_COLS = Array.from(activeMonths).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99));
