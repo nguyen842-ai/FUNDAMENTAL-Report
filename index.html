@@ -1,173 +1,201 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>RTM Fundamental & Brand Analytics</title>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <link rel="icon" type="image/png" href="faviconTCI.png">
+    <title>Tracking Effective & Efficiency Route - Fundamental</title>
     
-    <!-- Thư viện Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         /* =========================================================
-           1. CẤU HÌNH DARK THEME PREMIUM
+           1. CẤU HÌNH BIẾN GIAO DIỆN (THEME VARIABLES)
            ========================================================= */
         :root {
-            --bg-main: #16181D;
-            --bg-card: #21232A;
-            --color-1: #0B486B; --color-2: #3B8686; --color-3: #79BD9A; --color-4: #A8DBA8; --color-5: #CFF09E;
-            --primary: var(--color-4);
-            --secondary: var(--color-2);
-            --text-main: #FFFFFF;
-            --text-muted: #A0AAB5;
-            --border-color: rgba(121, 189, 154, 0.2);
-            --border-radius: 12px; 
-            --accent-warning: #fbbf24;
-            --accent-success: var(--color-5);
+            --bg-color: #f1f5f9; --primary: #3b82f6; --primary-hover: #2563eb; --border: #cbd5e1;
+            --text-main: #0f172a; --text-sub: #475569; --white: #ffffff;
+            --color-tot: #16a34a; --color-dat: #86efac; --color-cai-thien: #fef08a; --color-khong-hq: #fca5a5;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --badge-bg: #e2e8f0; --warning-bg: #fff7ed; --warning-border: #f97316;
+            --header-color: #1e3a8a; --table-header: #f8fafc;
+            --radius-lg: 20px; --radius-md: 12px;
         }
 
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); font-size: 13px; overflow-x: hidden; padding: 20px; }
-
-        /* =========================================================
-           2. MÀN HÌNH LOADING SUPABASE
-           ========================================================= */
-        #loader-wrapper {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--bg-main); z-index: 99999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.4s ease;
+        body.dark-mode {
+            --bg-color: #0f172a; --primary: #3b82f6; --primary-hover: #60a5fa; --border: #334155;
+            --text-main: #f8fafc; --text-sub: #94a3b8; --white: #1e293b;
+            --color-tot: #22c55e; --color-dat: #4ade80; --color-cai-thien: #facc15; --color-khong-hq: #ef4444;
+            --card-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            --badge-bg: #334155; --warning-bg: #451a03; --warning-border: #ea580c;
+            --header-color: #38bdf8; --table-header: #0f172a;
         }
-        #loader-wrapper.hidden { opacity: 0; visibility: hidden; }
-        .spinner-container { position: relative; width: 60px; height: 60px; margin-bottom: 20px; }
-        .spinner-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px solid transparent; }
-        .spinner-ring:nth-child(1) { border-top-color: var(--primary); animation: spin 1s linear infinite; }
-        .spinner-ring:nth-child(2) { border-bottom-color: var(--secondary); animation: spin-reverse 1.2s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
-        .loader-text { color: var(--primary); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; animation: pulse 1s infinite; text-align: center;}
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        body, html { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); font-size: 13px; transition: background-color 0.3s, color 0.3s; }
+        .container { max-width: 1500px; margin: 0 auto; padding: 20px; }
+        
+        /* =========================================================
+           2. HEADER & CÀI ĐẶT
+           ========================================================= */
+        .header { background: var(--white); padding: 24px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); margin-bottom: 24px; transition: 0.3s; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;}
+        .header h1 { margin: 0; font-size: 1.5em; color: var(--header-color); text-transform: uppercase; font-weight: 700; letter-spacing: -0.5px;}
+
+        .settings-content { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+        .set-group { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-sub); }
+        .set-btn { padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--text-main); border-radius: var(--radius-md); font-weight: 600; transition: 0.2s; }
+        .set-btn:hover { background: var(--badge-bg); }
+        .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        input[type="range"] { cursor: pointer; }
 
         /* =========================================================
-           3. HEADER & TABS
+           3. BỘ LỌC (FILTERS)
            ========================================================= */
-        .header { margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-        .header h1 { color: var(--primary); font-size: 24px; font-weight: 800; margin-bottom: 5px; text-transform: uppercase; }
+        .filters { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;}
+        .filter-group { display: flex; flex-direction: column; min-width: 180px; flex-grow: 1;}
+        .filter-group label { font-weight: 600; margin-bottom: 6px; color: var(--text-sub); text-transform: uppercase; font-size: 11px;}
+        .filter-group select { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1em; background: var(--white); color: var(--text-main); transition: 0.2s; font-weight: 600;}
+        .filter-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; text-transform: uppercase; font-size: 11px;}
-        .tab-btn.active { background: var(--primary); color: var(--bg-main); }
+        /* =========================================================
+           4. STATUS BAR (KIỂM TRA TIẾN ĐỘ)
+           ========================================================= */
+        #status-bar { padding-top: 15px; font-size: 1em; color: var(--text-sub); display: flex; gap: 20px; border-top: 1px dashed var(--border);}
+        .status-badge { font-weight: bold; padding: 4px 10px; border-radius: 6px; background: var(--badge-bg); transition: 0.3s;}
 
         /* =========================================================
-           4. BỘ LỌC THÁC ĐỔ (FILTERS)
+           5. TABS & BẢNG
            ========================================================= */
-        .filters { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; background: var(--bg-card); padding: 15px; border-radius: var(--border-radius); border: 1px solid var(--border-color);}
-        .filter-group { display: flex; flex-direction: column; gap: 5px; min-width: 150px; flex-grow: 1; max-width: 250px;}
-        .filter-group label { font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
-        .filter-group select { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; outline: none; cursor: pointer; font-weight: 600;}
-        .filter-group select:focus { border-color: var(--primary); }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .tab-btn { padding: 12px 20px; background: transparent; border: none; font-weight: 700; font-size: 1.1em; color: var(--text-sub); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.2s;}
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        .tab-content { display: none; transition: 0.3s; }
+        .tab-content.active { display: block; }
 
-        /* =========================================================
-           5. DYNAMIC TABLE
-           ========================================================= */
-        .table-container { overflow-x: auto; background: var(--bg-card); border-radius: var(--border-radius); border: 1px solid var(--border-color); max-height: 70vh; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1000px; }
-        
-        th { background: var(--secondary); color: var(--text-main); padding: 12px; font-weight: bold; text-align: center; border: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; font-size: 11px; text-transform: uppercase;}
-        td { padding: 10px; border: 1px solid var(--border-color); text-align: right; color: var(--text-main); }
-        
-        /* Freeze first columns for scrolling */
-        .col-sticky-1 { position: sticky; left: 0; background: var(--bg-card); z-index: 5; text-align: left; font-weight: bold; }
-        .col-sticky-2 { position: sticky; left: 100px; background: var(--bg-card); z-index: 5; text-align: left; font-weight: bold; }
-        .col-sticky-3 { position: sticky; left: 250px; background: var(--bg-card); z-index: 5; text-align: left; font-weight: bold; }
-        
-        /* Z-index fix for top-left corners */
-        th.col-sticky-1, th.col-sticky-2, th.col-sticky-3 { z-index: 15; }
+        .section-title { color: var(--header-color); margin: 30px 0 15px 0; font-size: 1.2em; text-transform: uppercase; border-left: 4px solid var(--primary); padding-left: 10px;}
 
-        .metric-name { text-align: left !important; color: var(--text-muted); font-weight: 600;}
-        .row-highlight { background: rgba(121, 189, 154, 0.05); }
+        .table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); max-height: 600px; margin-bottom: 40px;}
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; font-size: 1em; }
+        th, td { padding: 14px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+        th:last-child, td:last-child { border-right: none; }
+        
+        th { background: var(--table-header); font-weight: 700; color: var(--text-main); position: sticky; top: 0; z-index: 10; text-transform: uppercase; font-size: 11px;}
+        td { color: var(--text-main); }
+        
+        /* Sticky Cột bên trái */
+        .col-sticky-1 { position: sticky; left: 0; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700;}
+        .col-sticky-2 { position: sticky; left: 100px; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700; color: var(--primary);}
+        .col-sticky-3 { position: sticky; left: 250px; background: var(--white); z-index: 5; text-align: left !important; font-weight: 700; color: var(--warning-border);}
+        
+        th.col-sticky-1, th.col-sticky-2, th.col-sticky-3 { background: var(--table-header); z-index: 15; }
+        
+        .metric-name { text-align: left !important; font-weight: 600; color: var(--text-sub); }
+        .row-highlight { background: rgba(59, 130, 246, 0.03); }
         .val-primary { color: var(--primary); font-weight: bold; }
+        .val-success { color: var(--color-tot); font-weight: bold; }
+
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-    <!-- MÀN HÌNH LOADING SUPABASE -->
-    <div id="loader-wrapper">
-        <div class="spinner-container"><div class="spinner-ring"></div><div class="spinner-ring"></div></div>
-        <div class="loader-text">Loading Data...</div>
-    </div>
-
+<div class="container">
     <div class="header">
-        <h1>BÁO CÁO FUNDAMENTAL & BRAND</h1>
-        <p style="color: var(--text-muted);">Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự</p>
+        <div class="header-top">
+            <h1>BÁO CÁO FUNDAMENTAL & BRAND</h1>
+            <div class="settings-content">
+                <div class="set-group">
+                    <button class="set-btn" id="btn-light" onclick="changeTheme('light')">Light</button> 
+                    <button class="set-btn active" id="btn-dark" onclick="changeTheme('dark')">Dark</button>
+                </div>
+                <div class="set-group">
+                    <label>Font Size:</label> 
+                    <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
+                    <span id="fontValue">13px</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Area</label>
+                <select id="flt-area" onchange="applyFilters('area')"><option value="ALL">-- Tất cả Area --</option></select>
+            </div>
+            <div class="filter-group">
+                <label>CDM</label>
+                <select id="flt-cdm" onchange="applyFilters('cdm')"><option value="ALL">-- Tất cả CDM --</option></select>
+            </div>
+            <div class="filter-group">
+                <label>KAM</label>
+                <select id="flt-kam" onchange="applyFilters('kam')"><option value="ALL">-- Tất cả KAM --</option></select>
+            </div>
+            <div class="filter-group">
+                <label>KAE/DSR</label>
+                <select id="flt-kae" onchange="applyFilters('kae')"><option value="ALL">-- Tất cả KAE/DSR --</option></select>
+            </div>
+            <div class="filter-group" id="filter-cat-container">
+                <label>Category (Brand)</label>
+                <select id="flt-cat" onchange="applyFilters('cat')"><option value="ALL">-- Tất cả Category --</option></select>
+            </div>
+        </div>
+
+        <div id="status-bar">
+            <span>Kiểm tra tiến độ: <span id="st-supa" class="status-badge" style="color: var(--primary);">Đang khởi tạo kết nối...</span></span>
+        </div>
     </div>
 
-    <!-- TABS -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1')">TAB 1: FUNDAMENTAL OVERVIEW</button>
-        <button class="tab-btn" onclick="switchTab('tab2')">TAB 2: BRAND CATEGORY</button>
+        <button class="tab-btn active" onclick="switchTab('tab1', this)">TAB 1: FUNDAMENTAL OVERVIEW</button>
+        <button class="tab-btn" onclick="switchTab('tab2', this)">TAB 2: BRAND CATEGORY</button>
     </div>
 
-    <!-- BỘ LỌC THÁC ĐỔ -->
-    <div class="filters">
-        <div class="filter-group">
-            <label>Area</label>
-            <select id="flt-area" onchange="applyFilters('area')"><option value="ALL">Tất cả Area</option></select>
-        </div>
-        <div class="filter-group">
-            <label>CDM</label>
-            <select id="flt-cdm" onchange="applyFilters('cdm')"><option value="ALL">Tất cả CDM</option></select>
-        </div>
-        <div class="filter-group">
-            <label>KAM</label>
-            <select id="flt-kam" onchange="applyFilters('kam')"><option value="ALL">Tất cả KAM</option></select>
-        </div>
-        <div class="filter-group">
-            <label>KAE/DSR</label>
-            <select id="flt-kae" onchange="applyFilters('kae')"><option value="ALL">Tất cả KAE/DSR</option></select>
-        </div>
-        <div class="filter-group" id="filter-cat-container">
-            <label>Category (Brand)</label>
-            <select id="flt-cat" onchange="applyFilters('cat')"><option value="ALL">Tất cả Category</option></select>
-        </div>
+    <div id="tab1" class="tab-content active">
+        <!-- Render 3 bảng CDM, KAM, KAE -->
     </div>
 
-    <!-- VÙNG HIỂN THỊ BẢNG -->
-    <div class="table-container" id="table-wrapper">
-        <!-- Bảng sẽ được render bằng Javascript ở đây -->
+    <div id="tab2" class="tab-content">
+        <!-- Render 3 bảng CDM, KAM, KAE -->
     </div>
+</div>
 
 <script>
     // ======================================================================
-    // BIẾN TOÀN CỤC (GLOBAL VARIABLES)
+    // UI CÀI ĐẶT
     // ======================================================================
-    let dbMaster = []; 
-    let dbSales = [];
+    function changeTheme(theme) {
+        if (theme === 'dark') document.body.classList.add('dark-mode');
+        else document.body.classList.remove('dark-mode');
+        document.getElementById('btn-dark').classList.toggle('active', theme === 'dark');
+        document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+    }
+
+    function changeFontSize(val) {
+        document.body.style.fontSize = val + 'px';
+        document.getElementById('fontValue').innerText = val + 'px';
+    }
+
+    // Cập nhật trạng thái
+    function updateStatus(text, colorVar) {
+        let st = document.getElementById('st-supa');
+        st.innerText = text;
+        st.style.color = colorVar ? `var(${colorVar})` : 'var(--text-main)';
+    }
+
+    // ======================================================================
+    // BIẾN TOÀN CỤC & TIỀN XỬ LÝ (GIỮ NGUYÊN LOGIC)
+    // ======================================================================
+    let dbMaster = [], dbSales = [];
     let currentTab = 'tab1';
-    
-    // Mảng sẽ được sinh động sau khi kéo dữ liệu
-    let TIME_COLS = []; 
-    let CATS = []; 
+    let TIME_COLS = [], CATS = []; 
 
-    const METRICS = [
-        "Coverage (outlets)", 
-        "Active Outlets (distinct count)", 
-        "Active Rate (%)", 
-        "AVG SKU/ invoice", 
-        "AVG Value/ invoice (VND)", 
-        "Performance (VND)"
-    ];
-
+    const METRICS = ["Coverage (outlets)", "Active Outlets", "Active Rate (%)", "AVG SKU/ invoice", "AVG Value/ invoice (VND)", "Performance (VND)"];
     const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
 
-    // Helper Functions
     const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
     const fmtPct = (n) => (n || 0).toFixed(1) + '%';
     const fmtFloat = (n) => (n || 0).toFixed(1);
 
-    // Chuẩn hóa chuỗi tên nhân sự
     const cleanName = (name, isKamField = false, areaName = "") => {
         let cleanStr = String(name || "").replace(/[✔️❌]/g, '').trim();
         if (isKamField) {
@@ -181,37 +209,27 @@
         return cleanStr;
     };
 
-    // Hàm lấy CDM theo đúng chuẩn map: {"Khu vực|KAM": "CDM"}
     const getCdm = (cleanKam, areaName) => {
         if (typeof cdmMap !== 'undefined') {
             let exactAreaKey = String(areaName || "").trim() + "|" + cleanKam;
             let upperAreaKey = String(areaName || "").toUpperCase().trim() + "|" + cleanKam;
-            
-            // Tìm theo "Khu vực|KAM" trước
             if (cdmMap[exactAreaKey]) return cdmMap[exactAreaKey];
             if (cdmMap[upperAreaKey]) return cdmMap[upperAreaKey];
-            
-            // Tìm theo KAM độc lập (dự phòng)
             if (cdmMap[cleanKam]) return cdmMap[cleanKam];
         }
         return "Chưa phân bổ CDM";
     };
 
-    // ======================================================================
-    // LOGIC SAU KHI DỮ LIỆU ĐƯỢC TẢI XONG BỞI SUPABASE
-    // ======================================================================
     function init() {
+        updateStatus('Đang xử lý dữ liệu...', '--primary');
         dbMaster = []; dbSales = [];
-        // Nối dữ liệu từ các file
         if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
         if (typeof dbMasterM6 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM6); dbSales = dbSales.concat(dbSalesM6); }
         if (typeof dbMasterM7 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM7); dbSales = dbSales.concat(dbSalesM7); }
         if (typeof dbMasterM8 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM8); dbSales = dbSales.concat(dbSalesM8); }
 
-        let activeMonths = new Set();
-        let activeCats = new Set();
+        let activeMonths = new Set(), activeCats = new Set();
 
-        // 1. Tiền xử lý dbMaster
         dbMaster.forEach(d => {
             if(!d || !d.cusCode) return;
             d.month = (d.month || "").toString().trim();
@@ -223,17 +241,12 @@
             d.kae = cleanName(d.kae, false, d.area);
         });
 
-        // 2. Tiền xử lý dbSales
         let filteredSales = [];
         dbSales.forEach(d => {
             if(!d || !d.cusCode) return;
-            
-            // Xử lý Cat (Category / Brand) & LOẠI BỎ CATEGORY LÀ "DISPLAY"
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
-                // Lọc bỏ ngay nếu là hàng trưng bày
-                if (catName === 'DISPLAY') return; 
-                
+                if (catName === 'DISPLAY') return; // Chặn Category Display
                 d.cat = catName;
                 activeCats.add(catName);
             }
@@ -243,58 +256,43 @@
             d.kam = cleanName(d.kam, true, d.area);
             d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
-            
-            // Hóa đơn ID
             d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
-            
-            // Lưu lại vào mảng data sạch
             filteredSales.push(d);
         });
-        
-        // Cập nhật lại biến dbSales chỉ chứa Data không có "DISPLAY"
         dbSales = filteredSales;
 
-        // Gán mảng TIME_COLS động dựa trên dữ liệu thật (Sắp xếp theo tháng)
         TIME_COLS = Array.from(activeMonths).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99));
-        
-        // Gán mảng CATS động
         CATS = Array.from(activeCats).sort();
 
-        // Ẩn Loading Screen
-        setTimeout(() => { document.getElementById('loader-wrapper').classList.add('hidden'); }, 300);
-
-        // Khởi tạo UI
         initFilters();
-        renderTable();
+        renderActiveTab();
+        
+        updateStatus('✅ Hoàn tất tải dữ liệu', '--color-tot');
     }
 
     // ======================================================================
-    // LOGIC BỘ LỌC THÁC ĐỔ (WATERFALL)
+    // BỘ LỌC (FILTERS)
     // ======================================================================
     function initFilters() {
         populateDropdown('flt-area', [...new Set(dbMaster.map(d => d.area))]);
-        updateDropdowns('area'); // Khởi tạo cấp dưới
+        updateDropdowns('area');
         populateDropdown('flt-cat', CATS);
     }
 
     function populateDropdown(id, options) {
         let sel = document.getElementById(id);
-        sel.innerHTML = `<option value="ALL">Tất cả</option>` + options.filter(Boolean).sort().map(o => `<option value="${o}">${o}</option>`).join('');
+        sel.innerHTML = `<option value="ALL">-- Tất cả --</option>` + options.filter(Boolean).sort().map(o => `<option value="${o}">${o}</option>`).join('');
     }
 
     function getVal(id) { return document.getElementById(id).value; }
     
     function applyFilters(changedLevel) {
         updateDropdowns(changedLevel);
-        renderTable();
+        renderActiveTab();
     }
 
     function updateDropdowns(changedLevel) {
-        let selArea = getVal('flt-area');
-        let selCdm = getVal('flt-cdm');
-        let selKam = getVal('flt-kam');
-
-        // Lọc Master Data dựa theo cấp bậc hiện tại để lấy options cho cấp dưới
+        let selArea = getVal('flt-area'), selCdm = getVal('flt-cdm'), selKam = getVal('flt-kam');
         let filtered = dbMaster.filter(d => 
             (selArea === 'ALL' || d.area === selArea) &&
             (changedLevel === 'area' || selCdm === 'ALL' || d.cdm === selCdm) &&
@@ -314,41 +312,28 @@
     }
 
     // ======================================================================
-    // LOGIC ENGINE (TÍNH TOÁN & GOM NHÓM DỮ LIỆU RENDER)
+    // LOGIC TÍNH TOÁN & GOM DATA (GIỮ NGUYÊN)
     // ======================================================================
-    function switchTab(tabId) {
+    function switchTab(tabId, btn) {
         currentTab = tabId;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        renderTable();
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        renderActiveTab();
     }
 
-    function renderTable() {
-        let fArea = getVal('flt-area');
-        let fCdm = getVal('flt-cdm');
-        let fKam = getVal('flt-kam');
-        let fKae = getVal('flt-kae');
-        let fCat = getVal('flt-cat');
-
-        // Xác định cấp độ View (Cột 2)
-        let viewLevel = 'CDM';
-        let groupKey = 'cdm';
-        if (fKae !== 'ALL' || fKam !== 'ALL') { viewLevel = 'KAE/DSR'; groupKey = 'kae'; }
-        else if (fCdm !== 'ALL') { viewLevel = 'KAM'; groupKey = 'kam'; }
-
+    function compileData(isTab2, groupKey) {
         let dataMap = {};
+        let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae'), fCat = getVal('flt-cat');
 
-        function initEntityBlock(key, areaStr, entityStr, brandStr = null) {
+        function initBlock(key, areaStr, entityStr, brandStr = null) {
             if (!dataMap[key]) {
-                dataMap[key] = {
-                    area: areaStr, entity: entityStr, brand: brandStr,
-                    m: {}
-                };
+                dataMap[key] = { area: areaStr, entity: entityStr, brand: brandStr, m: {} };
                 TIME_COLS.forEach(m => dataMap[key].m[m] = { covSet: new Set(), actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
             }
         }
 
-        // Chạy qua dbMaster để tính Coverage (Mẫu số)
         dbMaster.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -356,21 +341,19 @@
             if (fKae !== 'ALL' && d.kae !== fKae) return;
 
             let eName = d[groupKey];
-            if (currentTab === 'tab1') {
-                initEntityBlock(eName, d.area, eName);
+            if (!isTab2) {
+                initBlock(eName, d.area, eName);
                 if (TIME_COLS.includes(d.month)) dataMap[eName].m[d.month].covSet.add(d.cusCode);
             } else {
-                // Tab 2: Phương án A (Coverage bằng nhau cho mọi Brands)
                 CATS.forEach(c => {
                     if (fCat !== 'ALL' && c !== fCat) return; 
                     let compKey = eName + '|' + c;
-                    initEntityBlock(compKey, d.area, eName, c);
+                    initBlock(compKey, d.area, eName, c);
                     if (TIME_COLS.includes(d.month)) dataMap[compKey].m[d.month].covSet.add(d.cusCode);
                 });
             }
         });
 
-        // Chạy qua dbSales để tính Active, Sales, DropSize
         dbSales.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -379,91 +362,105 @@
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
-            
-            if (currentTab === 'tab1') {
+            if (!isTab2) {
                 if (dataMap[eName] && TIME_COLS.includes(d.month)) {
                     let mx = dataMap[eName].m[d.month];
                     mx.actSet.add(d.cusCode);
-                    mx.sales += (d.sales || 0);
-                    mx.skus += (d.skuLines || 0);
-                    mx.invSet.add(d.invId);
+                    mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
                 }
             } else {
                 let compKey = eName + '|' + d.cat;
                 if (dataMap[compKey] && TIME_COLS.includes(d.month)) {
                     let mx = dataMap[compKey].m[d.month];
                     mx.actSet.add(d.cusCode);
-                    mx.sales += (d.sales || 0);
-                    mx.skus += (d.skuLines || 0);
-                    mx.invSet.add(d.invId);
+                    mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
                 }
             }
         });
+        return dataMap;
+    }
 
-        // Xây dựng Table HTML
-        let isTab2 = currentTab === 'tab2';
-        let html = `
-            <table>
-                <thead>
-                    <tr>
+    // ======================================================================
+    // HTML GENERATOR (3 BẢNG VỚI TIÊU ĐỀ LỚN)
+    // ======================================================================
+    function buildTableHtml(dataMap, entityLabel, isTab2) {
+        let html = `<div class="table-container"><table><thead><tr>
                         <th class="col-sticky-1" style="width: 100px;">Area</th>
-                        <th class="col-sticky-2" style="width: 150px;">${viewLevel}</th>
+                        <th class="col-sticky-2" style="width: 150px;">${entityLabel}</th>
                         ${isTab2 ? '<th class="col-sticky-3" style="width: 120px;">Brand</th>' : ''}
-                        <th style="width: 200px; text-align: left;">Fundamental</th>
+                        <th style="width: 220px; text-align: left;">Fundamental</th>
                         ${TIME_COLS.map(m => `<th>${m}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+                    </tr></thead><tbody>`;
 
         let keys = Object.keys(dataMap).sort();
-
-        if (keys.length === 0) {
-            html += `<tr><td colspan="${isTab2 ? 4 + TIME_COLS.length : 3 + TIME_COLS.length}" style="text-align:center; padding: 30px;">Không có dữ liệu phù hợp với bộ lọc</td></tr>`;
-        }
+        if (keys.length === 0) return `<div class="table-container" style="padding:30px; text-align:center;">Không có dữ liệu</div>`;
 
         keys.forEach(k => {
             let rowData = dataMap[k];
-            let rows = [];
-            
             for(let i=0; i<6; i++) {
                 let rHtml = '';
-                // Hợp nhất ô (rowspan) cho Area, Entity, Brand
                 if (i === 0) {
                     rHtml += `<td rowspan="6" class="col-sticky-1">${rowData.area}</td>`;
-                    rHtml += `<td rowspan="6" class="col-sticky-2" style="color:var(--primary);">${rowData.entity}</td>`;
-                    if(isTab2) rHtml += `<td rowspan="6" class="col-sticky-3" style="color:var(--accent-warning);">${rowData.brand}</td>`;
+                    rHtml += `<td rowspan="6" class="col-sticky-2">${rowData.entity}</td>`;
+                    if(isTab2) rHtml += `<td rowspan="6" class="col-sticky-3">${rowData.brand}</td>`;
                 }
                 
                 rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
                 
-                // Trải ngang các tháng
                 TIME_COLS.forEach(m => {
                     let dM = rowData.m[m];
-                    let cov = dM.covSet.size;
-                    let act = dM.actSet.size;
-                    let sls = dM.sales;
-                    let invs = dM.invSet.size;
-                    let skus = dM.skus;
-
+                    let cov = dM.covSet.size, act = dM.actSet.size, sls = dM.sales, invs = dM.invSet.size, skus = dM.skus;
                     let val = 0;
                     if (i === 0) val = fmt(cov); 
                     else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
                     else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
                     else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
                     else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
-                    else if (i === 5) val = `<span style="color:var(--accent-success); font-weight:bold;">${fmt(sls)}</span>`; 
-
+                    else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
                     rHtml += `<td>${val}</td>`;
                 });
-                
-                rows.push(`<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`);
+                html += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
             }
-            html += rows.join('');
         });
+        html += `</tbody></table></div>`;
+        return html;
+    }
 
-        html += `</tbody></table>`;
-        document.getElementById('table-wrapper').innerHTML = html;
+    function renderActiveTab() {
+        let isTab2 = currentTab === 'tab2';
+        let container = document.getElementById(currentTab);
+        let finalHtml = '';
+
+        // Tự động bỏ qua hiển thị bảng trên nếu User lọc quá sâu
+        let fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae');
+
+        // BẢNG 1: BY CDM (Ẩn đi nếu user đã chọn 1 KAM/KAE cụ thể để đỡ rối mắt, hoặc có thể hiển thị tuỳ ý. Ở đây hiển thị hết)
+        if (fKam === 'ALL' && fKae === 'ALL') {
+            let dataCdm = compileData(isTab2, 'cdm');
+            if (Object.keys(dataCdm).length > 0) {
+                finalHtml += `<h2 class="section-title">TRACKING BY CDM</h2>`;
+                finalHtml += buildTableHtml(dataCdm, 'CDM', isTab2);
+            }
+        }
+
+        // BẢNG 2: BY KAM
+        if (fKae === 'ALL') {
+            let dataKam = compileData(isTab2, 'kam');
+            if (Object.keys(dataKam).length > 0) {
+                finalHtml += `<h2 class="section-title">TRACKING BY KAM</h2>`;
+                finalHtml += buildTableHtml(dataKam, 'KAM', isTab2);
+            }
+        }
+
+        // BẢNG 3: BY KAE/DSR
+        let dataKae = compileData(isTab2, 'kae');
+        if (Object.keys(dataKae).length > 0) {
+            finalHtml += `<h2 class="section-title">TRACKING BY SALES TEAM</h2>`;
+            finalHtml += buildTableHtml(dataKae, 'KAE/DSR', isTab2);
+        }
+
+        if (finalHtml === '') finalHtml = `<div class="table-container" style="padding:30px; text-align:center;">Không có dữ liệu</div>`;
+        container.innerHTML = finalHtml;
     }
 </script>
 
@@ -473,19 +470,10 @@
 <script>
 (async function () {
     function handleFatalError(title, subtitle) {
-        var loaderText = document.querySelector('.loader-text');
-        var spinner = document.querySelector('.spinner-container');
-        
-        if(spinner) spinner.style.display = 'none';
-        if(loaderText) {
-            loaderText.innerHTML = `<span style="color: #ef4444; font-size: 14px; text-transform: none;">⚠️ ${title}<br><br><span style="font-size:12px; font-weight:normal; color:#A0AAB5;">${subtitle}</span></span>`;
-        }
+        updateStatus(`❌ ${title}: ${subtitle}`, '--color-khong-hq');
     }
 
-    if (!window.supabase) {
-        handleFatalError("LỖI THƯ VIỆN", "Không thể tải thư viện Supabase CDN. Vui lòng kiểm tra mạng.");
-        return;
-    }
+    if (!window.supabase) { handleFatalError("LỖI THƯ VIỆN", "Không thể tải thư viện Supabase"); return; }
 
     const SUPABASE_URL = 'https://mrqldgycwovpbmzdeuyz.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_itZfZBVw7bxE184tGh7x8A_0_r-QB5p';
@@ -494,20 +482,16 @@
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
 
     try {
+        updateStatus('Đang xác thực quyền truy cập...', '--primary');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session) {
-            window.location.href = HUB_URL;
-            return; 
-        }
+        if (sessionError || !session) { window.location.href = HUB_URL; return; }
 
         var version = '?t=' + new Date().getTime();
-        var localScripts = ['kamMap.js', 'cdmMap.js']; // Các map nội bộ GitHub
+        var localScripts = ['kamMap.js', 'cdmMap.js'];
         var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
 
-        const { data: signedUrlsData, error } = await supabase.storage
-            .from(BUCKET_NAME)
-            .createSignedUrls(secureDataFiles, 60);
-
+        updateStatus('Đang kéo dữ liệu an toàn...', '--primary');
+        const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
         if (error || !signedUrlsData) throw error;
 
         var scriptsToLoad = [];
@@ -523,45 +507,28 @@
         scriptsToLoad.forEach(function(item) {
             var script = document.createElement('script');
             script.src = item.url;
-            
             script.onload = function() {
                 if (hasError) return;
                 loadedScripts++;
-                // Chống sập nếu file map trống
                 if (item.url.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
                 if (item.url.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
-
-                if (loadedScripts === scriptsToLoad.length) {
-                    if (typeof init === 'function') init();
-                }
+                if (loadedScripts === scriptsToLoad.length) { if (typeof init === 'function') init(); }
             };
-            
             script.onerror = function() {
-                // Bỏ qua lỗi 404 cho file map trên Github (giúp trang vẫn sống)
                 if (item.type === 'local') {
-                    console.warn("Chưa tìm thấy hoặc lỗi tải file map: " + item.url);
+                    console.warn("Chưa tìm thấy map: " + item.url);
                     if (item.url.includes('cdmMap')) window.cdmMap = {}; 
                     if (item.url.includes('kamMap')) window.kamMap = {};
-                    
                     loadedScripts++;
-                    if (loadedScripts === scriptsToLoad.length && !hasError) {
-                        if (typeof init === 'function') init();
-                    }
-                } 
-                else {
+                    if (loadedScripts === scriptsToLoad.length && !hasError) { if (typeof init === 'function') init(); }
+                } else {
                     hasError = true;
-                    let fileName = item.url.split('?')[0].substring(0, 50) + '...';
-                    handleFatalError("LỖI KẾT NỐI DỮ LIỆU", `Không có quyền truy cập file bảo mật: <b>${fileName}</b><br>Vui lòng tải lại trang hoặc quay lại Trang Hub.`); 
+                    handleFatalError("LỖI KẾT NỐI", `Truy cập file bị từ chối.`); 
                 }
             };
-            
             document.body.appendChild(script);
         });
-
-    } catch (err) {
-        console.error("Lỗi:", err);
-        handleFatalError("LỖI BẢO MẬT", "Không có quyền truy cập dữ liệu (Access Denied). Vui lòng đăng nhập lại qua Trang Hub.");
-    }
+    } catch (err) { handleFatalError("LỖI BẢO MẬT", "Không có quyền truy cập dữ liệu."); }
 })();
 </script>
 </body>
