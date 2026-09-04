@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tracking Effective & Efficiency Route - Fundamental</title>
+    <title>Fundamental Report</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,46 +37,47 @@
         /* =========================================================
            2. HEADER & CÀI ĐẶT
            ========================================================= */
-        .header { background: var(--white); padding: 24px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); margin-bottom: 24px; transition: 0.3s; }
+        .header { background: var(--white); padding: 20px 24px; border-radius: var(--radius-lg); box-shadow: var(--card-shadow); margin-bottom: 24px; transition: 0.3s; }
         .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;}
         .header h1 { margin: 0; font-size: 1.5em; color: var(--header-color); text-transform: uppercase; font-weight: 700; letter-spacing: -0.5px;}
 
-        .settings-content { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-        .set-group { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-sub); }
-        .set-btn { padding: 8px 14px; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--text-main); border-radius: var(--radius-md); font-weight: 600; transition: 0.2s; }
+        .settings-content { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .set-group { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-sub); }
+        .set-btn { padding: 6px 12px; cursor: pointer; border: 1px solid var(--border); background: var(--white); color: var(--text-main); border-radius: var(--radius-md); font-weight: 600; transition: 0.2s; font-size: 0.95em;}
         .set-btn:hover { background: var(--badge-bg); }
         .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        input[type="range"] { cursor: pointer; }
+        input[type="range"] { cursor: pointer; max-width: 80px;}
+
+        /* Status Bar Mới gộp chung trên Header */
+        .status-divider { height: 24px; width: 1px; background: var(--border); margin: 0 5px; }
+        .status-badge { font-weight: 700; padding: 4px 10px; border-radius: 6px; background: var(--badge-bg); transition: 0.3s;}
 
         /* =========================================================
            3. BỘ LỌC (FILTERS)
            ========================================================= */
-        .filters { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;}
+        .filters { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
         .filter-group { display: flex; flex-direction: column; min-width: 180px; flex-grow: 1;}
         .filter-group label { font-weight: 600; margin-bottom: 6px; color: var(--text-sub); text-transform: uppercase; font-size: 11px;}
-        .filter-group select { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1em; background: var(--white); color: var(--text-main); transition: 0.2s; font-weight: 600;}
-        .filter-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .filter-group select { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1em; background: var(--badge-bg); color: var(--text-main); transition: 0.2s; font-weight: 600;}
+        .filter-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background: var(--white);}
         
         /* =========================================================
-           4. STATUS BAR (KIỂM TRA TIẾN ĐỘ)
+           4. MAIN TABS & SUB TABS
            ========================================================= */
-        #status-bar { padding-top: 15px; font-size: 1em; color: var(--text-sub); display: flex; gap: 20px; border-top: 1px dashed var(--border);}
-        .status-badge { font-weight: bold; padding: 4px 10px; border-radius: 6px; background: var(--badge-bg); transition: 0.3s;}
-
-        /* =========================================================
-           5. TABS & BẢNG
-           ========================================================= */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .main-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid var(--border); }
         .tab-btn { padding: 12px 20px; background: transparent; border: none; font-weight: 700; font-size: 1.1em; color: var(--text-sub); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.2s;}
         .tab-btn:hover { color: var(--primary); }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
         
-        .tab-content { display: none; transition: 0.3s; }
-        .tab-content.active { display: block; }
+        .sub-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+        .sub-tab-btn { padding: 8px 18px; background: var(--badge-bg); border: 1px solid var(--border); border-radius: 20px; font-weight: 600; font-size: 0.95em; color: var(--text-sub); cursor: pointer; transition: 0.2s;}
+        .sub-tab-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary);}
+        .sub-tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);}
 
-        .section-title { color: var(--header-color); margin: 30px 0 15px 0; font-size: 1.2em; text-transform: uppercase; border-left: 4px solid var(--primary); padding-left: 10px;}
-
-        .table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); max-height: 600px; margin-bottom: 40px;}
+        /* =========================================================
+           5. BẢNG HIỂN THỊ
+           ========================================================= */
+        .table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); max-height: 600px; margin-bottom: 40px; transition: 0.3s;}
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; font-size: 1em; }
         th, td { padding: 14px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
         th:last-child, td:last-child { border-right: none; }
@@ -103,16 +104,32 @@
 <div class="container">
     <div class="header">
         <div class="header-top">
-            <h1>BÁO CÁO FUNDAMENTAL & BRAND</h1>
+            <div>
+                <h1 data-i18n="title">FUNDAMENTAL REPORT</h1>
+                <p style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 12px;" data-i18n="desc">Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự</p>
+            </div>
             <div class="settings-content">
+                <!-- Song ngữ -->
+                <div class="set-group">
+                    <button class="set-btn" id="btn-en" onclick="changeLang('en')">EN</button> 
+                    <button class="set-btn active" id="btn-vi" onclick="changeLang('vi')">VI</button>
+                </div>
+                <div class="status-divider"></div>
+                <!-- Sáng/Tối -->
                 <div class="set-group">
                     <button class="set-btn" id="btn-light" onclick="changeTheme('light')">Light</button> 
                     <button class="set-btn active" id="btn-dark" onclick="changeTheme('dark')">Dark</button>
                 </div>
+                <div class="status-divider"></div>
+                <!-- Cỡ chữ -->
                 <div class="set-group">
-                    <label>Font Size:</label> 
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
-                    <span id="fontValue">13px</span>
+                    <span id="fontValue" style="min-width: 35px;">13px</span>
+                </div>
+                <div class="status-divider"></div>
+                <!-- Trạng thái -->
+                <div class="set-group">
+                    <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
             </div>
         </div>
@@ -120,48 +137,84 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Area</label>
-                <select id="flt-area" onchange="applyFilters('area')"><option value="ALL">-- Tất cả Area --</option></select>
+                <select id="flt-area" onchange="applyFilters('area')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>CDM</label>
-                <select id="flt-cdm" onchange="applyFilters('cdm')"><option value="ALL">-- Tất cả CDM --</option></select>
+                <select id="flt-cdm" onchange="applyFilters('cdm')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>KAM</label>
-                <select id="flt-kam" onchange="applyFilters('kam')"><option value="ALL">-- Tất cả KAM --</option></select>
+                <select id="flt-kam" onchange="applyFilters('kam')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>KAE/DSR</label>
-                <select id="flt-kae" onchange="applyFilters('kae')"><option value="ALL">-- Tất cả KAE/DSR --</option></select>
+                <select id="flt-kae" onchange="applyFilters('kae')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group" id="filter-cat-container">
                 <label>Category (Brand)</label>
-                <select id="flt-cat" onchange="applyFilters('cat')"><option value="ALL">-- Tất cả Category --</option></select>
+                <select id="flt-cat" onchange="applyFilters('cat')"><option value="ALL">-- Tất cả --</option></select>
             </div>
         </div>
-
-        <div id="status-bar">
-            <span>Kiểm tra tiến độ: <span id="st-supa" class="status-badge" style="color: var(--primary);">Đang khởi tạo kết nối...</span></span>
-        </div>
     </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('tab1', this)">TAB 1: FUNDAMENTAL OVERVIEW</button>
-        <button class="tab-btn" onclick="switchTab('tab2', this)">TAB 2: BRAND CATEGORY</button>
+    <!-- MAIN TABS -->
+    <div class="main-tabs">
+        <button class="tab-btn active" onclick="switchMainTab('tab_overview', this)" data-i18n="tab_overview">OVERVIEW</button>
+        <button class="tab-btn" onclick="switchMainTab('tab_brand', this)" data-i18n="tab_brand">BY BRAND</button>
     </div>
 
-    <div id="tab1" class="tab-content active">
-        <!-- Render 3 bảng CDM, KAM, KAE -->
+    <!-- SUB TABS -->
+    <div class="sub-tabs">
+        <button class="sub-tab-btn active" onclick="switchSubTab('cdm', this)">BY CDM</button>
+        <button class="sub-tab-btn" onclick="switchSubTab('kam', this)">BY KAM</button>
+        <button class="sub-tab-btn" onclick="switchSubTab('kae', this)">BY SALES TEAM</button>
     </div>
 
-    <div id="tab2" class="tab-content">
-        <!-- Render 3 bảng CDM, KAM, KAE -->
+    <!-- VÙNG RENDER BẢNG DUY NHẤT -->
+    <div id="table-wrapper-main">
+        <!-- Javascript sẽ đổ bảng vào đây dựa theo Tab Chính và Tab Con -->
     </div>
+
 </div>
 
 <script>
     // ======================================================================
-    // UI CÀI ĐẶT
+    // 1. TỪ ĐIỂN SONG NGỮ (I18N)
+    // ======================================================================
+    const dict = {
+        vi: {
+            title: "FUNDAMENTAL REPORT", desc: "Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự",
+            tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
+            st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
+            no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại"
+        },
+        en: {
+            title: "FUNDAMENTAL REPORT", desc: "Analysis: Coverage, Active, Drop Size by Personnel",
+            tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
+            st_init: "Initializing...", st_load: "Loading data...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
+            no_data: "No valid data matches the current filters"
+        }
+    };
+
+    let currentLang = 'vi';
+
+    function changeLang(lang) {
+        currentLang = lang;
+        document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+        document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
+        
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            let key = el.getAttribute('data-i18n');
+            if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
+        });
+        
+        // Nếu đã có dữ liệu thì render lại bảng để cập nhật ngôn ngữ nếu cần
+        if(dbMaster.length > 0) renderActiveTab();
+    }
+
+    // ======================================================================
+    // 2. UI CÀI ĐẶT
     // ======================================================================
     function changeTheme(theme) {
         if (theme === 'dark') document.body.classList.add('dark-mode');
@@ -175,20 +228,20 @@
         document.getElementById('fontValue').innerText = val + 'px';
     }
 
-    // Cập nhật trạng thái
-    function updateStatus(text, colorVar) {
+    function updateStatus(textKey, colorVar) {
         let st = document.getElementById('st-supa');
-        st.innerText = text;
+        st.innerText = dict[currentLang][textKey] || textKey;
         st.style.color = colorVar ? `var(${colorVar})` : 'var(--text-main)';
     }
 
     // ======================================================================
-    // BIẾN TOÀN CỤC & TIỀN XỬ LÝ (GIỮ NGUYÊN LOGIC)
+    // 3. BIẾN TOÀN CỤC & TIỀN XỬ LÝ (GIỮ NGUYÊN LOGIC)
     // ======================================================================
     let dbMaster = [], dbSales = [];
-    let currentTab = 'tab1';
+    let currentMainTab = 'tab_overview';
+    let currentSubTab = 'cdm';
+    
     let TIME_COLS = [], CATS = []; 
-
     const METRICS = ["Coverage (outlets)", "Active Outlets", "Active Rate (%)", "AVG SKU/ invoice", "AVG Value/ invoice (VND)", "Performance (VND)"];
     const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
 
@@ -221,7 +274,7 @@
     };
 
     function init() {
-        updateStatus('Đang xử lý dữ liệu...', '--primary');
+        updateStatus('st_load', '--primary');
         dbMaster = []; dbSales = [];
         if (typeof dbMasterM5 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM5); dbSales = dbSales.concat(dbSalesM5); }
         if (typeof dbMasterM6 !== 'undefined') { dbMaster = dbMaster.concat(dbMasterM6); dbSales = dbSales.concat(dbSalesM6); }
@@ -267,11 +320,11 @@
         initFilters();
         renderActiveTab();
         
-        updateStatus('✅ Hoàn tất tải dữ liệu', '--color-tot');
+        updateStatus('st_done', '--color-tot');
     }
 
     // ======================================================================
-    // BỘ LỌC (FILTERS)
+    // 4. BỘ LỌC (FILTERS)
     // ======================================================================
     function initFilters() {
         populateDropdown('flt-area', [...new Set(dbMaster.map(d => d.area))]);
@@ -312,14 +365,19 @@
     }
 
     // ======================================================================
-    // LOGIC TÍNH TOÁN & GOM DATA (GIỮ NGUYÊN)
+    // 5. ĐIỀU HƯỚNG TABS & TÍNH TOÁN DATA
     // ======================================================================
-    function switchTab(tabId, btn) {
-        currentTab = tabId;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    function switchMainTab(tabId, btn) {
+        currentMainTab = tabId;
+        document.querySelectorAll('.main-tabs .tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById(tabId).classList.add('active');
+        renderActiveTab();
+    }
+
+    function switchSubTab(subId, btn) {
+        currentSubTab = subId;
+        document.querySelectorAll('.sub-tabs .sub-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         renderActiveTab();
     }
 
@@ -381,9 +439,23 @@
     }
 
     // ======================================================================
-    // HTML GENERATOR (3 BẢNG VỚI TIÊU ĐỀ LỚN)
+    // 6. RENDER HTML BẢNG
     // ======================================================================
-    function buildTableHtml(dataMap, entityLabel, isTab2) {
+    function renderActiveTab() {
+        let isTab2 = currentMainTab === 'tab_brand';
+        let container = document.getElementById('table-wrapper-main');
+        
+        let labelMap = { 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE/DSR' };
+        let entityLabel = labelMap[currentSubTab];
+
+        let dataMap = compileData(isTab2, currentSubTab);
+        let keys = Object.keys(dataMap).sort();
+
+        if (keys.length === 0) {
+            container.innerHTML = `<div class="table-container" style="padding:40px; text-align:center; color: var(--text-sub); font-size: 1.1em;">${dict[currentLang]['no_data']}</div>`;
+            return;
+        }
+
         let html = `<div class="table-container"><table><thead><tr>
                         <th class="col-sticky-1" style="width: 100px;">Area</th>
                         <th class="col-sticky-2" style="width: 150px;">${entityLabel}</th>
@@ -391,9 +463,6 @@
                         <th style="width: 220px; text-align: left;">Fundamental</th>
                         ${TIME_COLS.map(m => `<th>${m}</th>`).join('')}
                     </tr></thead><tbody>`;
-
-        let keys = Object.keys(dataMap).sort();
-        if (keys.length === 0) return `<div class="table-container" style="padding:30px; text-align:center;">Không có dữ liệu</div>`;
 
         keys.forEach(k => {
             let rowData = dataMap[k];
@@ -423,54 +492,18 @@
             }
         });
         html += `</tbody></table></div>`;
-        return html;
-    }
-
-    function renderActiveTab() {
-        let isTab2 = currentTab === 'tab2';
-        let container = document.getElementById(currentTab);
-        let finalHtml = '';
-
-        // Tự động bỏ qua hiển thị bảng trên nếu User lọc quá sâu
-        let fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae');
-
-        // BẢNG 1: BY CDM (Ẩn đi nếu user đã chọn 1 KAM/KAE cụ thể để đỡ rối mắt, hoặc có thể hiển thị tuỳ ý. Ở đây hiển thị hết)
-        if (fKam === 'ALL' && fKae === 'ALL') {
-            let dataCdm = compileData(isTab2, 'cdm');
-            if (Object.keys(dataCdm).length > 0) {
-                finalHtml += `<h2 class="section-title">TRACKING BY CDM</h2>`;
-                finalHtml += buildTableHtml(dataCdm, 'CDM', isTab2);
-            }
-        }
-
-        // BẢNG 2: BY KAM
-        if (fKae === 'ALL') {
-            let dataKam = compileData(isTab2, 'kam');
-            if (Object.keys(dataKam).length > 0) {
-                finalHtml += `<h2 class="section-title">TRACKING BY KAM</h2>`;
-                finalHtml += buildTableHtml(dataKam, 'KAM', isTab2);
-            }
-        }
-
-        // BẢNG 3: BY KAE/DSR
-        let dataKae = compileData(isTab2, 'kae');
-        if (Object.keys(dataKae).length > 0) {
-            finalHtml += `<h2 class="section-title">TRACKING BY SALES TEAM</h2>`;
-            finalHtml += buildTableHtml(dataKae, 'KAE/DSR', isTab2);
-        }
-
-        if (finalHtml === '') finalHtml = `<div class="table-container" style="padding:30px; text-align:center;">Không có dữ liệu</div>`;
-        container.innerHTML = finalHtml;
+        container.innerHTML = html;
     }
 </script>
 
 <!-- ======================================================================
-     SUPABASE SECURE LOADER SCRIPT (NÂNG CẤP BẮT LỖI GITHUB)
+     SUPABASE SECURE LOADER SCRIPT 
      ====================================================================== -->
 <script>
 (async function () {
     function handleFatalError(title, subtitle) {
-        updateStatus(`❌ ${title}: ${subtitle}`, '--color-khong-hq');
+        updateStatus('st_err', '--color-khong-hq');
+        alert(`${title}\n${subtitle}`);
     }
 
     if (!window.supabase) { handleFatalError("LỖI THƯ VIỆN", "Không thể tải thư viện Supabase"); return; }
@@ -482,7 +515,6 @@
     const HUB_URL = 'https://nguyen842-ai.github.io/Tong-hop-bao-cao/'; 
 
     try {
-        updateStatus('Đang xác thực quyền truy cập...', '--primary');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError || !session) { window.location.href = HUB_URL; return; }
 
@@ -490,7 +522,6 @@
         var localScripts = ['kamMap.js', 'cdmMap.js'];
         var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
 
-        updateStatus('Đang kéo dữ liệu an toàn...', '--primary');
         const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
         if (error || !signedUrlsData) throw error;
 
@@ -523,7 +554,7 @@
                     if (loadedScripts === scriptsToLoad.length && !hasError) { if (typeof init === 'function') init(); }
                 } else {
                     hasError = true;
-                    handleFatalError("LỖI KẾT NỐI", `Truy cập file bị từ chối.`); 
+                    handleFatalError("LỖI KẾT NỐI", `Truy cập file bảo mật bị từ chối.`); 
                 }
             };
             document.body.appendChild(script);
