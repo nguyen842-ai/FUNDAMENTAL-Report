@@ -23,6 +23,7 @@ const cdmMap = {
 "4. EASTERN|ĐẶNG HOÀNG SƠN": "LÊ TRẦN KIM KHÁNH",
 "4. EASTERN|PHẠM HỮU HẠNH": "LÊ TRẦN KIM KHÁNH",
 "6. CENTRAL|BÙI CÔNG PHƯỚC": "VŨ NGỌC HẢI",
+"6. CENTRAL|VŨ NGỌC HẢI": "VŨ NGỌC HẢI",
 "5. HLEC|HỒ VĂN TIẾN": "VŨ NGỌC HẢI",
 "1. HA NOI|VŨ DUY HÙNG": "PHẠM QUỐC TOẢN",
 "2. NORTH COAST|NGUYỄN THANH QUỲNH": "PHẠM QUỐC TOẢN",
