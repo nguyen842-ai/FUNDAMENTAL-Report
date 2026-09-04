@@ -74,7 +74,7 @@
         .sub-tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);}
 
         /* =========================================================
-           5. BẢNG HIỂN THỊ (TÁCH BẢNG)
+           5. BẢNG HIỂN THỊ & ACCORDION NHÂN VIÊN NGHỈ VIỆC
            ========================================================= */
         #table-wrapper-main { transition: opacity 0.2s ease; }
         
@@ -102,6 +102,24 @@
         .val-primary { color: var(--primary); font-weight: bold; }
         .val-success { color: var(--color-tot); font-weight: bold; }
 
+        /* Accordion cho Nhân sự thôi việc (❌) */
+        .inactive-group {
+            margin-top: 40px; border-radius: var(--radius-md); border: 1px solid var(--border);
+            background: var(--white); box-shadow: var(--card-shadow);
+        }
+        .inactive-summary {
+            padding: 16px 20px; font-weight: 700; font-size: 1.1em; color: var(--text-main);
+            background: var(--badge-bg); cursor: pointer; list-style: none; display: flex; align-items: center;
+            transition: 0.2s; text-transform: uppercase; border-radius: var(--radius-md);
+        }
+        .inactive-group[open] .inactive-summary { border-radius: var(--radius-md) var(--radius-md) 0 0; border-bottom: 1px solid var(--border); }
+        .inactive-summary::-webkit-details-marker { display: none; }
+        .inactive-summary:hover { background: rgba(0,0,0,0.05); }
+        .inactive-summary::before {
+            content: '▶'; font-size: 0.8em; margin-right: 12px; color: var(--primary); transition: transform 0.3s;
+        }
+        .inactive-group[open] .inactive-summary::before { transform: rotate(90deg); }
+        .inactive-content { padding: 25px 20px 0 20px; background: var(--bg-color); border-radius: 0 0 var(--radius-md) var(--radius-md);}
     </style>
 </head>
 <body class="dark-mode">
@@ -182,9 +200,11 @@
 
 <script>
     // ======================================================================
-    // 0. BIẾN TOÀN CỤC & TÍNH NGÀY THÁNG (ĐƯA LÊN ĐẦU TIÊN TRÁNH LỖI)
+    // 0. BIẾN TOÀN CỤC & TÍNH NGÀY THÁNG
     // ======================================================================
     let dbMaster = [], dbSales = [];
+    let statusMap = {}; // Lưu trữ dấu ✔️ / ❌ cho từng nhân sự
+    
     let currentMainTab = 'tab_overview', currentSubTab = 'cdm';
     let TIME_COLS = [], CATS = []; 
     const METRICS = ["Coverage (outlets)", "Active Outlets", "Active Rate (%)", "AVG SKU/ invoice", "AVG Value/ invoice (VND)", "Performance (VND)"];
@@ -194,8 +214,8 @@
     (function calculateLastUpdateDate() {
         let d = new Date();
         let utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-        let gmt7Date = new Date(utc + (3600000 * 7)); // Chuyển múi giờ về GMT+7
-        gmt7Date.setDate(gmt7Date.getDate() - 1);     // Lùi về 1 ngày (Today - 1)
+        let gmt7Date = new Date(utc + (3600000 * 7)); 
+        gmt7Date.setDate(gmt7Date.getDate() - 1);     
         
         let day = String(gmt7Date.getDate()).padStart(2, '0');
         let month = String(gmt7Date.getMonth() + 1).padStart(2, '0');
@@ -211,13 +231,15 @@
             title: "FUNDAMENTAL REPORT", desc: "Cập nhật lần cuối: ",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
             st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_proc: "Đang xử lý...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
-            no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại"
+            no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại",
+            inactive_staff: "Nhân sự thôi việc / Không hoạt động"
         },
         en: {
             title: "FUNDAMENTAL REPORT", desc: "Last updated: ",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
             st_init: "Initializing...", st_load: "Loading data...", st_proc: "Processing...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
-            no_data: "No valid data matches the current filters"
+            no_data: "No valid data matches the current filters",
+            inactive_staff: "Resigned / Inactive Staff"
         }
     };
 
@@ -233,14 +255,9 @@
             if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
         });
 
-        // Gắn ngày vào dòng description
         document.getElementById('last-update-desc').innerText = dict[currentLang]['desc'] + lastUpdateDateStr;
-        
-        // Khởi động lại bảng nếu dữ liệu đã được tải xong
         if(dbMaster && dbMaster.length > 0) renderActiveTab();
     }
-
-    // Khởi chạy ngôn ngữ ngay lập tức để cập nhật ngày tháng
     changeLang(currentLang);
 
     // ======================================================================
@@ -275,16 +292,22 @@
     const fmtPct = (n) => (n || 0).toFixed(1) + '%';
     const fmtFloat = (n) => (n || 0).toFixed(1);
 
+    // TÁCH ICON ✔️ ❌ VÀ LƯU VÀO STATUS_MAP
     const cleanName = (name, isKamField = false, areaName = "") => {
-        let cleanStr = String(name || "").replace(/[✔️❌]/g, '').trim();
+        let raw = String(name || "").trim();
+        let match = raw.match(/[✔️❌]/);
+        let cleanStr = raw.replace(/[✔️❌]/g, '').trim();
+        
         if (isKamField) {
             cleanStr = cleanStr.toUpperCase(); 
             if (typeof kamMap !== 'undefined') {
                 let areaKey = String(areaName || "").toUpperCase().trim() + "|" + cleanStr;
-                if (kamMap[areaKey]) return kamMap[areaKey];
-                if (kamMap[cleanStr]) return kamMap[cleanStr];
+                if (kamMap[areaKey]) cleanStr = kamMap[areaKey];
+                else if (kamMap[cleanStr]) cleanStr = kamMap[cleanStr];
             }
         }
+        
+        if (match) statusMap[cleanStr] = match[0]; // Ghi nhận icon mới nhất
         return cleanStr;
     };
 
@@ -307,6 +330,7 @@
         
         let activeMonths = new Set(), activeCats = new Set();
         dbMaster = []; dbSales = [];
+        statusMap = {}; // Reset map icon khi load lại data
 
         let rawMasterData = useCache ? window.rawMasterCache : [];
         let rawSalesData = useCache ? window.rawSalesCache : [];
@@ -326,6 +350,8 @@
             d.month = (d.month || "").toString().trim();
             if(d.month) activeMonths.add(d.month);
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
+            
+            // Hàm cleanName sẽ tự động hút dấu ✔️ ❌ vào statusMap
             d.kam = cleanName(d.kam, true, d.area);
             d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
@@ -343,6 +369,7 @@
             }
             d.month = (d.month || "").toString().trim();
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
+            
             d.kam = cleanName(d.kam, true, d.area);
             d.cdm = getCdm(d.kam, d.area); 
             d.kae = cleanName(d.kae, false, d.area);
@@ -467,7 +494,7 @@
     }
 
     // ======================================================================
-    // 6. TÁCH BẢNG & RENDER UI
+    // 6. RENDER GIAO DIỆN (TÁCH CỘT, GOM NGHỈ VIỆC)
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
@@ -483,56 +510,87 @@
             return;
         }
 
-        let html = '';
-
-        eNames.forEach(eName => {
-            let entityData = entities[eName];
-            let brands = Object.keys(entityData.brands).sort();
-            
-            if (isTab2 && brands.length === 0) return;
-
-            html += `<div class="entity-section">`;
-            html += `<h3 class="entity-title">${entityLabel}: ${eName}</h3>`;
-            html += `<div class="table-container"><table><thead><tr>
-                        <th class="col-sticky-1" style="width: 100px;">Area</th>
-                        ${isTab2 ? '<th class="col-sticky-2" style="width: 150px;">Brand</th>' : ''}
-                        <th style="width: 250px; text-align: left;">Fundamental</th>
-                        ${TIME_COLS.map(m => `<th>${m}</th>`).join('')}
-                    </tr></thead><tbody>`;
-
-            brands.forEach(bName => {
-                let bData = entityData.brands[bName];
-                
-                for(let i=0; i<6; i++) {
-                    let rHtml = '';
-                    if (i === 0) {
-                        rHtml += `<td rowspan="6" class="col-sticky-1">${entityData.area}</td>`;
-                        if (isTab2) rHtml += `<td rowspan="6" class="col-sticky-2" style="color:var(--warning-border);">${bName}</td>`;
-                    }
-                    
-                    rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
-                    
-                    TIME_COLS.forEach(m => {
-                        let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
-                        let mx = bData.m[m];
-                        let act = mx.actSet.size, sls = mx.sales, invs = mx.invSet.size, skus = mx.skus;
-                        
-                        let val = 0;
-                        if (i === 0) val = fmt(cov); 
-                        else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
-                        else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
-                        else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
-                        else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
-                        else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
-                        rHtml += `<td>${val}</td>`;
-                    });
-                    html += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
-                }
-            });
-            html += `</tbody></table></div></div>`;
+        // Tách nhân viên đang làm (✔️ / rỗng) và nghỉ việc (❌)
+        let activeEntities = [];
+        let inactiveEntities = [];
+        eNames.forEach(e => {
+            if (statusMap[e] === '❌') inactiveEntities.push(e);
+            else activeEntities.push(e);
         });
 
-        container.innerHTML = html;
+        // Hàm render list bảng
+        const buildListHtml = (list) => {
+            let htmlChunk = '';
+            list.forEach(eName => {
+                let entityData = entities[eName];
+                let brands = Object.keys(entityData.brands).sort();
+                if (isTab2 && brands.length === 0) return;
+
+                // Gắn icon lên thẳng Tiêu đề
+                let icon = statusMap[eName] ? `${statusMap[eName]} ` : '';
+                
+                htmlChunk += `<div class="entity-section">`;
+                htmlChunk += `<h3 class="entity-title">${entityLabel}: ${icon}${eName}</h3>`;
+                
+                // HEADER CỦA BẢNG ĐÃ LOẠI BỎ CỘT NHÂN VIÊN
+                htmlChunk += `<div class="table-container"><table><thead><tr>
+                            <th class="col-sticky-1" style="width: 100px;">Area</th>
+                            ${isTab2 ? '<th class="col-sticky-2" style="width: 120px;">Brand</th>' : ''}
+                            <th style="width: 250px; text-align: left;">Fundamental</th>
+                            ${TIME_COLS.map(m => `<th>${m}</th>`).join('')}
+                        </tr></thead><tbody>`;
+
+                brands.forEach(bName => {
+                    let bData = entityData.brands[bName];
+                    for(let i=0; i<6; i++) {
+                        let rHtml = '';
+                        if (i === 0) {
+                            rHtml += `<td rowspan="6" class="col-sticky-1">${entityData.area}</td>`;
+                            if (isTab2) rHtml += `<td rowspan="6" class="col-sticky-2" style="color:var(--warning-border); font-weight: bold;">${bName}</td>`;
+                        }
+                        
+                        rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
+                        
+                        TIME_COLS.forEach(m => {
+                            let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
+                            let mx = bData.m[m];
+                            let act = mx.actSet.size, sls = mx.sales, invs = mx.invSet.size, skus = mx.skus;
+                            
+                            let val = 0;
+                            if (i === 0) val = fmt(cov); 
+                            else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
+                            else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
+                            else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
+                            else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
+                            else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
+                            rHtml += `<td>${val}</td>`;
+                        });
+                        htmlChunk += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
+                    }
+                });
+                htmlChunk += `</tbody></table></div></div>`;
+            });
+            return htmlChunk;
+        };
+
+        let finalHtml = buildListHtml(activeEntities);
+
+        // Gói tất cả nhân sự nghỉ việc (❌) vào 1 Accordion ở dưới cùng
+        if (inactiveEntities.length > 0) {
+            let inactiveHtml = buildListHtml(inactiveEntities);
+            if (inactiveHtml) {
+                let sumText = `${dict[currentLang]['inactive_staff']} (${inactiveEntities.length})`;
+                finalHtml += `
+                <details class="inactive-group">
+                    <summary class="inactive-summary">${sumText}</summary>
+                    <div class="inactive-content">
+                        ${inactiveHtml}
+                    </div>
+                </details>`;
+            }
+        }
+
+        container.innerHTML = finalHtml || `<div class="table-container" style="padding:40px; text-align:center; color:var(--text-sub); border:none; box-shadow:none; font-size:1.1em;">${dict[currentLang]['no_data']}</div>`;
     }
 </script>
 
