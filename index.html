@@ -293,10 +293,9 @@
         return 0;
     }
 
-    // TÁCH ICON BẰNG REGEX MỞ RỘNG (GẮN VÀO THÁNG MỚI NHẤT)
+    // TÁCH ICON BẰNG REGEX (Bắt luôn mọi loại X, Tick và cập nhật Tracker)
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
-        // Bộ nhận diện mới (Bắt được mọi loại X và Tick)
         let match = raw.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
         let cleanStr = raw.replace(/[✔️✅☑️❌✖️✕✗✘✓]/g, '').trim();
         
@@ -315,17 +314,13 @@
             }
         }
         
-        if (icon && monthStr) {
+        // Luôn theo dõi tháng xuất hiện mới nhất của nhân sự
+        if (monthStr && cleanStr) {
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanStr] || statusTracker[cleanStr].month < mIdx) {
                 statusTracker[cleanStr] = { month: mIdx, icon: icon };
-                statusMap[cleanStr] = icon;
             } else if (statusTracker[cleanStr].month === mIdx) {
-                // Trong cùng 1 tháng, nếu vừa tick vừa cross -> ÉP SANG CROSS (Nghỉ)
-                if (icon === '❌') {
-                    statusTracker[cleanStr].icon = '❌';
-                    statusMap[cleanStr] = '❌';
-                }
+                if (icon === '❌') statusTracker[cleanStr].icon = '❌';
             }
         }
         return cleanStr;
@@ -349,23 +344,19 @@
              else icon = '✔️';
         }
         
-        if (icon && monthStr) {
+        if (monthStr && cleanCdm && cleanCdm !== "Chưa phân bổ CDM") {
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanCdm] || statusTracker[cleanCdm].month < mIdx) {
                 statusTracker[cleanCdm] = { month: mIdx, icon: icon };
-                statusMap[cleanCdm] = icon;
             } else if (statusTracker[cleanCdm].month === mIdx) {
-                if (icon === '❌') {
-                    statusTracker[cleanCdm].icon = '❌';
-                    statusMap[cleanCdm] = '❌';
-                }
+                if (icon === '❌') statusTracker[cleanCdm].icon = '❌';
             }
         }
         return cleanCdm;
     };
 
     // ======================================================================
-    // 3. ENGINE XỬ LÝ (GIỮ NGUYÊN TÊN GỐC DÀNH CHO CACHE)
+    // 3. ENGINE XỬ LÝ 
     // ======================================================================
     function init(useCache = false) {
         updateStatus('st_proc', '--primary');
@@ -392,7 +383,6 @@
             if(d.month) activeMonths.add(d.month);
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            // Giữ tên thô để chạy Cache
             d.raw_kam = d.raw_kam || d.kam || "";
             d.raw_kae = d.raw_kae || d.kae || "";
 
@@ -425,6 +415,22 @@
 
         TIME_COLS = Array.from(activeMonths).sort((a,b) => getMonthIndex(a) - getMonthIndex(b));
         CATS = Array.from(activeCats).sort();
+
+        // ---------------------------------------------------------
+        // CHỐT TRẠNG THÁI: AI KHÔNG CÓ TÊN Ở THÁNG CUỐI -> ÉP DẤU ❌
+        // ---------------------------------------------------------
+        if (TIME_COLS.length > 0) {
+            let latestGlobalMonthIdx = getMonthIndex(TIME_COLS[TIME_COLS.length - 1]);
+            for (let name in statusTracker) {
+                if (statusTracker[name].month < latestGlobalMonthIdx) {
+                    statusMap[name] = '❌'; 
+                } else {
+                    if (statusTracker[name].icon) {
+                        statusMap[name] = statusTracker[name].icon;
+                    }
+                }
+            }
+        }
 
         initFilters();
         executeWithLoading(renderActiveTab);
@@ -540,7 +546,7 @@
     }
 
     // ======================================================================
-    // 6. RENDER GIAO DIỆN (TÁCH CỘT, GOM NGHỈ VIỆC VÀO ACCORDION)
+    // 6. RENDER GIAO DIỆN CÓ GOM NHÓM
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
@@ -636,11 +642,11 @@
 </script>
 
 <!-- ======================================================================
-     7. INDEXED-DB CACHE V2 & SUPABASE LOADER
+     7. INDEXED-DB CACHE V3 & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
-    const CACHE_DB = 'RTM_Cache_DB_V2'; // ĐỔI TÊN ĐỂ XÓA TRÍ NHỚ BỊ LỖI CỦA TRÌNH DUYỆT
+    const CACHE_DB = 'RTM_Cache_DB_V3'; // BẢN V3 XÓA KÝ ỨC CŨ
     const CACHE_STORE = 'datasets';
     const CACHE_KEY = 'daily_rtm_data';
 
