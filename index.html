@@ -77,6 +77,8 @@
         /* =========================================================
            5. BẢNG HIỂN THỊ
            ========================================================= */
+        #table-wrapper-main { transition: opacity 0.2s ease; }
+        
         .table-container { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); overflow-x: auto; border: 1px solid var(--border); max-height: 600px; margin-bottom: 40px; transition: 0.3s;}
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; font-size: 1em; }
         th, td { padding: 14px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
@@ -137,23 +139,23 @@
         <div class="filters">
             <div class="filter-group">
                 <label>Area</label>
-                <select id="flt-area" onchange="applyFilters('area')"><option value="ALL">-- Tất cả --</option></select>
+                <select id="flt-area" onchange="userTriggerUpdate('area')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>CDM</label>
-                <select id="flt-cdm" onchange="applyFilters('cdm')"><option value="ALL">-- Tất cả --</option></select>
+                <select id="flt-cdm" onchange="userTriggerUpdate('cdm')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>KAM</label>
-                <select id="flt-kam" onchange="applyFilters('kam')"><option value="ALL">-- Tất cả --</option></select>
+                <select id="flt-kam" onchange="userTriggerUpdate('kam')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group">
                 <label>KAE/DSR</label>
-                <select id="flt-kae" onchange="applyFilters('kae')"><option value="ALL">-- Tất cả --</option></select>
+                <select id="flt-kae" onchange="userTriggerUpdate('kae')"><option value="ALL">-- Tất cả --</option></select>
             </div>
             <div class="filter-group" id="filter-cat-container">
                 <label>Category (Brand)</label>
-                <select id="flt-cat" onchange="applyFilters('cat')"><option value="ALL">-- Tất cả --</option></select>
+                <select id="flt-cat" onchange="userTriggerUpdate('cat')"><option value="ALL">-- Tất cả --</option></select>
             </div>
         </div>
     </div>
@@ -173,7 +175,7 @@
 
     <!-- VÙNG RENDER BẢNG DUY NHẤT -->
     <div id="table-wrapper-main">
-        <!-- Javascript sẽ đổ bảng vào đây dựa theo Tab Chính và Tab Con -->
+        <!-- Javascript sẽ đổ bảng vào đây -->
     </div>
 
 </div>
@@ -186,13 +188,13 @@
         vi: {
             title: "FUNDAMENTAL REPORT", desc: "Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
-            st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
+            st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_proc: "Đang xử lý...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
             no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại"
         },
         en: {
             title: "FUNDAMENTAL REPORT", desc: "Analysis: Coverage, Active, Drop Size by Personnel",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
-            st_init: "Initializing...", st_load: "Loading data...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
+            st_init: "Initializing...", st_load: "Loading data...", st_proc: "Processing...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
             no_data: "No valid data matches the current filters"
         }
     };
@@ -209,7 +211,6 @@
             if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
         });
         
-        // Nếu đã có dữ liệu thì render lại bảng để cập nhật ngôn ngữ nếu cần
         if(dbMaster.length > 0) renderActiveTab();
     }
 
@@ -234,8 +235,20 @@
         st.style.color = colorVar ? `var(${colorVar})` : 'var(--text-main)';
     }
 
+    // Cơ chế Yield (Nhường luồng giao diện) để render Loading
+    function executeWithLoading(callback) {
+        updateStatus('st_proc', '--primary');
+        document.getElementById('table-wrapper-main').style.opacity = '0.5';
+        
+        setTimeout(() => {
+            callback();
+            document.getElementById('table-wrapper-main').style.opacity = '1';
+            updateStatus('st_done', '--color-tot');
+        }, 30); // Dành 30ms cho trình duyệt vẽ trạng thái Loading
+    }
+
     // ======================================================================
-    // 3. BIẾN TOÀN CỤC & TIỀN XỬ LÝ (GIỮ NGUYÊN LOGIC)
+    // 3. BIẾN TOÀN CỤC & TIỀN XỬ LÝ
     // ======================================================================
     let dbMaster = [], dbSales = [];
     let currentMainTab = 'tab_overview';
@@ -299,7 +312,7 @@
             if(!d || !d.cusCode) return;
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
-                if (catName === 'DISPLAY') return; // Chặn Category Display
+                if (catName === 'DISPLAY') return; 
                 d.cat = catName;
                 activeCats.add(catName);
             }
@@ -318,9 +331,7 @@
         CATS = Array.from(activeCats).sort();
 
         initFilters();
-        renderActiveTab();
-        
-        updateStatus('st_done', '--color-tot');
+        executeWithLoading(renderActiveTab);
     }
 
     // ======================================================================
@@ -339,9 +350,11 @@
 
     function getVal(id) { return document.getElementById(id).value; }
     
-    function applyFilters(changedLevel) {
-        updateDropdowns(changedLevel);
-        renderActiveTab();
+    function userTriggerUpdate(changedLevel) {
+        executeWithLoading(() => {
+            updateDropdowns(changedLevel);
+            renderActiveTab();
+        });
     }
 
     function updateDropdowns(changedLevel) {
@@ -365,33 +378,42 @@
     }
 
     // ======================================================================
-    // 5. ĐIỀU HƯỚNG TABS & TÍNH TOÁN DATA
+    // 5. ĐIỀU HƯỚNG TABS & TÍNH TOÁN DATA (SIÊU TỐI ƯU O(N))
     // ======================================================================
     function switchMainTab(tabId, btn) {
         currentMainTab = tabId;
         document.querySelectorAll('.main-tabs .tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderActiveTab();
+        executeWithLoading(renderActiveTab);
     }
 
     function switchSubTab(subId, btn) {
         currentSubTab = subId;
         document.querySelectorAll('.sub-tabs .sub-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        renderActiveTab();
+        executeWithLoading(renderActiveTab);
     }
 
     function compileData(isTab2, groupKey) {
         let dataMap = {};
+        let entityCov = {}; // Lưu Coverage gốc
         let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae'), fCat = getVal('flt-cat');
+
+        function initEntityCov(eName) {
+            if (!entityCov[eName]) {
+                entityCov[eName] = { m: {} };
+                TIME_COLS.forEach(m => entityCov[eName].m[m] = new Set());
+            }
+        }
 
         function initBlock(key, areaStr, entityStr, brandStr = null) {
             if (!dataMap[key]) {
                 dataMap[key] = { area: areaStr, entity: entityStr, brand: brandStr, m: {} };
-                TIME_COLS.forEach(m => dataMap[key].m[m] = { covSet: new Set(), actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
+                TIME_COLS.forEach(m => dataMap[key].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
             }
         }
 
+        // 1. Quét dbMaster ĐÚNG 1 LẦN 
         dbMaster.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -399,19 +421,23 @@
             if (fKae !== 'ALL' && d.kae !== fKae) return;
 
             let eName = d[groupKey];
+            
+            // Chỉ đếm khách hàng cho Entity 1 lần
+            initEntityCov(eName);
+            if (TIME_COLS.includes(d.month)) entityCov[eName].m[d.month].add(d.cusCode);
+
             if (!isTab2) {
                 initBlock(eName, d.area, eName);
-                if (TIME_COLS.includes(d.month)) dataMap[eName].m[d.month].covSet.add(d.cusCode);
             } else {
                 CATS.forEach(c => {
                     if (fCat !== 'ALL' && c !== fCat) return; 
                     let compKey = eName + '|' + c;
                     initBlock(compKey, d.area, eName, c);
-                    if (TIME_COLS.includes(d.month)) dataMap[compKey].m[d.month].covSet.add(d.cusCode);
                 });
             }
         });
 
+        // 2. Quét dbSales
         dbSales.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
@@ -420,22 +446,18 @@
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
-            if (!isTab2) {
-                if (dataMap[eName] && TIME_COLS.includes(d.month)) {
-                    let mx = dataMap[eName].m[d.month];
-                    mx.actSet.add(d.cusCode);
-                    mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
-                }
-            } else {
-                let compKey = eName + '|' + d.cat;
-                if (dataMap[compKey] && TIME_COLS.includes(d.month)) {
-                    let mx = dataMap[compKey].m[d.month];
-                    mx.actSet.add(d.cusCode);
-                    mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
-                }
+            let compKey = isTab2 ? (eName + '|' + d.cat) : eName;
+            
+            if (dataMap[compKey] && TIME_COLS.includes(d.month)) {
+                let mx = dataMap[compKey].m[d.month];
+                mx.actSet.add(d.cusCode);
+                mx.sales += (d.sales || 0); 
+                mx.skus += (d.skuLines || 0); 
+                mx.invSet.add(d.invId);
             }
         });
-        return dataMap;
+
+        return { dataMap, entityCov };
     }
 
     // ======================================================================
@@ -448,7 +470,7 @@
         let labelMap = { 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE/DSR' };
         let entityLabel = labelMap[currentSubTab];
 
-        let dataMap = compileData(isTab2, currentSubTab);
+        let { dataMap, entityCov } = compileData(isTab2, currentSubTab);
         let keys = Object.keys(dataMap).sort();
 
         if (keys.length === 0) {
@@ -466,6 +488,8 @@
 
         keys.forEach(k => {
             let rowData = dataMap[k];
+            let eName = rowData.entity; 
+
             for(let i=0; i<6; i++) {
                 let rHtml = '';
                 if (i === 0) {
@@ -478,7 +502,11 @@
                 
                 TIME_COLS.forEach(m => {
                     let dM = rowData.m[m];
-                    let cov = dM.covSet.size, act = dM.actSet.size, sls = dM.sales, invs = dM.invSet.size, skus = dM.skus;
+                    
+                    // LẤY COVERAGE GỐC TỪ entityCov THAY VÌ ĐẾM LẠI
+                    let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
+                    
+                    let act = dM.actSet.size, sls = dM.sales, invs = dM.invSet.size, skus = dM.skus;
                     let val = 0;
                     if (i === 0) val = fmt(cov); 
                     else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
