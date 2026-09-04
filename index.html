@@ -149,7 +149,7 @@
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
                 </div>
                 <div class="status-divider"></div>
-                <!-- Trạng thái dời lên đây -->
+                <!-- Trạng thái -->
                 <div class="set-group">
                     <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
@@ -203,7 +203,10 @@
     // 0. BIẾN TOÀN CỤC & TÍNH NGÀY THÁNG
     // ======================================================================
     let dbMaster = [], dbSales = [];
-    let statusMap = {}; // Lưu trữ dấu ✔️ / ❌ cho từng nhân sự
+    
+    // Hệ thống Tracking Trạng thái Nhân sự thông minh (Ưu tiên tháng mới nhất)
+    let statusMap = {}; 
+    let statusTracker = {}; 
     
     let currentMainTab = 'tab_overview', currentSubTab = 'cdm';
     let TIME_COLS = [], CATS = []; 
@@ -292,8 +295,16 @@
     const fmtPct = (n) => (n || 0).toFixed(1) + '%';
     const fmtFloat = (n) => (n || 0).toFixed(1);
 
-    // TÁCH ICON ✔️ ❌ VÀ LƯU VÀO STATUS_MAP
-    const cleanName = (name, isKamField = false, areaName = "") => {
+    function getMonthIndex(mStr) {
+        let s = String(mStr).toLowerCase();
+        for (let k in monthOrder) {
+            if (s.includes(k)) return monthOrder[k];
+        }
+        return 0;
+    }
+
+    // TÁCH ICON ✔️ ❌ VÀ LƯU VÀO STATUS_MAP (UPDATE THEO THÁNG MỚI NHẤT)
+    const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
         let match = raw.match(/[✔️❌]/);
         let cleanStr = raw.replace(/[✔️❌]/g, '').trim();
@@ -307,19 +318,49 @@
             }
         }
         
-        if (match) statusMap[cleanStr] = match[0]; // Ghi nhận icon mới nhất
+        if (match && monthStr) {
+            let mIdx = getMonthIndex(monthStr);
+            // Ghi đè nếu tháng mới hơn. Nếu bằng tháng nhưng có X thì ưu tiên X.
+            if (!statusTracker[cleanStr] || statusTracker[cleanStr].month < mIdx) {
+                statusTracker[cleanStr] = { month: mIdx, icon: match[0] };
+                statusMap[cleanStr] = match[0];
+            } else if (statusTracker[cleanStr].month === mIdx) {
+                if (match[0] === '❌') {
+                    statusTracker[cleanStr].icon = '❌';
+                    statusMap[cleanStr] = '❌';
+                }
+            }
+        }
         return cleanStr;
     };
 
-    const getCdm = (cleanKam, areaName) => {
+    const getCdm = (cleanKam, areaName, monthStr = "") => {
+        let cdmName = "Chưa phân bổ CDM";
         if (typeof cdmMap !== 'undefined') {
             let exactAreaKey = String(areaName || "").trim() + "|" + cleanKam;
             let upperAreaKey = String(areaName || "").toUpperCase().trim() + "|" + cleanKam;
-            if (cdmMap[exactAreaKey]) return cdmMap[exactAreaKey];
-            if (cdmMap[upperAreaKey]) return cdmMap[upperAreaKey];
-            if (cdmMap[cleanKam]) return cdmMap[cleanKam];
+            if (cdmMap[exactAreaKey]) cdmName = cdmMap[exactAreaKey];
+            else if (cdmMap[upperAreaKey]) cdmName = cdmMap[upperAreaKey];
+            else if (cdmMap[cleanKam]) cdmName = cdmMap[cleanKam];
         }
-        return "Chưa phân bổ CDM";
+
+        // CDM cũng lưu trạng thái nếu file map có chứa icon
+        let match = cdmName.match(/[✔️❌]/);
+        let cleanCdm = cdmName.replace(/[✔️❌]/g, '').trim();
+        
+        if (match && monthStr) {
+            let mIdx = getMonthIndex(monthStr);
+            if (!statusTracker[cleanCdm] || statusTracker[cleanCdm].month < mIdx) {
+                statusTracker[cleanCdm] = { month: mIdx, icon: match[0] };
+                statusMap[cleanCdm] = match[0];
+            } else if (statusTracker[cleanCdm].month === mIdx) {
+                if (match[0] === '❌') {
+                    statusTracker[cleanCdm].icon = '❌';
+                    statusMap[cleanCdm] = '❌';
+                }
+            }
+        }
+        return cleanCdm;
     };
 
     // ======================================================================
@@ -330,7 +371,7 @@
         
         let activeMonths = new Set(), activeCats = new Set();
         dbMaster = []; dbSales = [];
-        statusMap = {}; // Reset map icon khi load lại data
+        statusMap = {}; statusTracker = {};
 
         let rawMasterData = useCache ? window.rawMasterCache : [];
         let rawSalesData = useCache ? window.rawSalesCache : [];
@@ -351,10 +392,9 @@
             if(d.month) activeMonths.add(d.month);
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            // Hàm cleanName sẽ tự động hút dấu ✔️ ❌ vào statusMap
-            d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam, d.area); 
-            d.kae = cleanName(d.kae, false, d.area);
+            d.kam = cleanName(d.kam, true, d.area, d.month);
+            d.cdm = getCdm(d.kam, d.area, d.month); 
+            d.kae = cleanName(d.kae, false, d.area, d.month);
             dbMaster.push(d);
         });
 
@@ -370,14 +410,14 @@
             d.month = (d.month || "").toString().trim();
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            d.kam = cleanName(d.kam, true, d.area);
-            d.cdm = getCdm(d.kam, d.area); 
-            d.kae = cleanName(d.kae, false, d.area);
+            d.kam = cleanName(d.kam, true, d.area, d.month);
+            d.cdm = getCdm(d.kam, d.area, d.month); 
+            d.kae = cleanName(d.kae, false, d.area, d.month);
             d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
             dbSales.push(d);
         });
 
-        TIME_COLS = Array.from(activeMonths).sort((a,b) => (monthOrder[a.toLowerCase()]||99) - (monthOrder[b.toLowerCase()]||99));
+        TIME_COLS = Array.from(activeMonths).sort((a,b) => getMonthIndex(a) - getMonthIndex(b));
         CATS = Array.from(activeCats).sort();
 
         initFilters();
@@ -494,7 +534,7 @@
     }
 
     // ======================================================================
-    // 6. RENDER GIAO DIỆN (TÁCH CỘT, GOM NGHỈ VIỆC)
+    // 6. RENDER GIAO DIỆN (TÁCH CỘT, GOM NGHỈ VIỆC VÀO ACCORDION)
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
@@ -510,7 +550,6 @@
             return;
         }
 
-        // Tách nhân viên đang làm (✔️ / rỗng) và nghỉ việc (❌)
         let activeEntities = [];
         let inactiveEntities = [];
         eNames.forEach(e => {
@@ -518,7 +557,6 @@
             else activeEntities.push(e);
         });
 
-        // Hàm render list bảng
         const buildListHtml = (list) => {
             let htmlChunk = '';
             list.forEach(eName => {
@@ -526,13 +564,11 @@
                 let brands = Object.keys(entityData.brands).sort();
                 if (isTab2 && brands.length === 0) return;
 
-                // Gắn icon lên thẳng Tiêu đề
                 let icon = statusMap[eName] ? `${statusMap[eName]} ` : '';
                 
                 htmlChunk += `<div class="entity-section">`;
                 htmlChunk += `<h3 class="entity-title">${entityLabel}: ${icon}${eName}</h3>`;
                 
-                // HEADER CỦA BẢNG ĐÃ LOẠI BỎ CỘT NHÂN VIÊN
                 htmlChunk += `<div class="table-container"><table><thead><tr>
                             <th class="col-sticky-1" style="width: 100px;">Area</th>
                             ${isTab2 ? '<th class="col-sticky-2" style="width: 120px;">Brand</th>' : ''}
@@ -575,7 +611,6 @@
 
         let finalHtml = buildListHtml(activeEntities);
 
-        // Gói tất cả nhân sự nghỉ việc (❌) vào 1 Accordion ở dưới cùng
         if (inactiveEntities.length > 0) {
             let inactiveHtml = buildListHtml(inactiveEntities);
             if (inactiveHtml) {
