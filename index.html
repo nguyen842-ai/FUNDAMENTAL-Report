@@ -111,7 +111,7 @@
         <div class="header-top">
             <div>
                 <h1 data-i18n="title">FUNDAMENTAL REPORT</h1>
-                <p style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 12px;" data-i18n="desc">Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự</p>
+                <p id="last-update-desc" style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 12px; font-weight: 600;"></p>
             </div>
             <div class="settings-content">
                 <!-- Song ngữ -->
@@ -131,7 +131,7 @@
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
                 </div>
                 <div class="status-divider"></div>
-                <!-- Trạng thái dời lên đây -->
+                <!-- Trạng thái -->
                 <div class="set-group">
                     <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
@@ -182,17 +182,33 @@
 
 <script>
     // ======================================================================
+    // 0. TÍNH TOÁN NGÀY CẬP NHẬT (GMT+7: TODAY - 1)
+    // ======================================================================
+    let lastUpdateDateStr = "";
+    (function calculateLastUpdateDate() {
+        let d = new Date();
+        let utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+        let gmt7Date = new Date(utc + (3600000 * 7)); // Chuyển múi giờ về GMT+7
+        gmt7Date.setDate(gmt7Date.getDate() - 1);     // Lùi về 1 ngày (Today - 1)
+        
+        let day = String(gmt7Date.getDate()).padStart(2, '0');
+        let month = String(gmt7Date.getMonth() + 1).padStart(2, '0');
+        let year = gmt7Date.getFullYear();
+        lastUpdateDateStr = `${day}/${month}/${year}`;
+    })();
+
+    // ======================================================================
     // 1. TỪ ĐIỂN SONG NGỮ (I18N)
     // ======================================================================
     const dict = {
         vi: {
-            title: "FUNDAMENTAL REPORT", desc: "Phân tích: Độ phủ, Active, Drop Size theo cấu trúc Nhân sự",
+            title: "FUNDAMENTAL REPORT", desc: "Cập nhật lần cuối: ",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
             st_init: "Đang khởi tạo...", st_load: "Đang tải dữ liệu...", st_proc: "Đang xử lý...", st_done: "✅ Dữ liệu sẵn sàng", st_err: "❌ Lỗi kết nối",
             no_data: "Không có dữ liệu phù hợp với bộ lọc hiện tại"
         },
         en: {
-            title: "FUNDAMENTAL REPORT", desc: "Analysis: Coverage, Active, Drop Size by Personnel",
+            title: "FUNDAMENTAL REPORT", desc: "Last updated: ",
             tab_overview: "OVERVIEW", tab_brand: "BY BRAND",
             st_init: "Initializing...", st_load: "Loading data...", st_proc: "Processing...", st_done: "✅ Data Ready", st_err: "❌ Connection Error",
             no_data: "No valid data matches the current filters"
@@ -205,13 +221,24 @@
         currentLang = lang;
         document.getElementById('btn-en').classList.toggle('active', lang === 'en');
         document.getElementById('btn-vi').classList.toggle('active', lang === 'vi');
+        
         document.querySelectorAll('[data-i18n]').forEach(el => {
             let key = el.getAttribute('data-i18n');
             if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
         });
+
+        // Gắn ngày vào dòng description
+        document.getElementById('last-update-desc').innerText = dict[currentLang]['desc'] + lastUpdateDateStr;
+        
         if(dbMaster.length > 0) renderActiveTab();
     }
 
+    // Khởi chạy ngôn ngữ ngay lập tức để cập nhật ngày tháng
+    changeLang(currentLang);
+
+    // ======================================================================
+    // 2. UI CÀI ĐẶT
+    // ======================================================================
     function changeTheme(theme) {
         if (theme === 'dark') document.body.classList.add('dark-mode');
         else document.body.classList.remove('dark-mode');
@@ -238,7 +265,7 @@
     }
 
     // ======================================================================
-    // 2. BIẾN TOÀN CỤC & HÀM XỬ LÝ CHUỖI
+    // 3. BIẾN TOÀN CỤC & HÀM XỬ LÝ CHUỖI
     // ======================================================================
     let dbMaster = [], dbSales = [];
     let currentMainTab = 'tab_overview', currentSubTab = 'cdm';
@@ -275,7 +302,7 @@
     };
 
     // ======================================================================
-    // 3. ENGINE XỬ LÝ (TÍCH HỢP CACHE VÀ LỌC DOVEMEN)
+    // 4. ENGINE XỬ LÝ (TÍCH HỢP CACHE VÀ LỌC DOVEMEN)
     // ======================================================================
     function init(useCache = false) {
         updateStatus('st_proc', '--primary');
@@ -283,7 +310,6 @@
         let activeMonths = new Set(), activeCats = new Set();
         dbMaster = []; dbSales = [];
 
-        // Nếu xài Cache thì dùng rawMaster, rawSales. Nếu không thì ghép từ các file dbMasterM5...
         let rawMasterData = useCache ? window.rawMasterCache : [];
         let rawSalesData = useCache ? window.rawSalesCache : [];
 
@@ -292,12 +318,11 @@
             if (typeof dbMasterM6 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM6); rawSalesData = rawSalesData.concat(dbSalesM6); }
             if (typeof dbMasterM7 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM7); rawSalesData = rawSalesData.concat(dbSalesM7); }
             if (typeof dbMasterM8 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM8); rawSalesData = rawSalesData.concat(dbSalesM8); }
-            // Cất vào biến Window để Save Cache
             window.rawMasterCache = rawMasterData;
             window.rawSalesCache = rawSalesData;
         }
 
-        // 1. Quét dbMaster
+        // Quét dbMaster
         rawMasterData.forEach(d => {
             if(!d || !d.cusCode) return;
             d.month = (d.month || "").toString().trim();
@@ -309,14 +334,12 @@
             dbMaster.push(d);
         });
 
-        // 2. Quét dbSales (Chặn DISPLAY và DOVEMEN)
+        // Quét dbSales (Chặn DISPLAY và DOVEMEN)
         rawSalesData.forEach(d => {
             if(!d || !d.cusCode) return;
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
-                // BỎ QUA 2 NHÓM NÀY:
                 if (catName === 'DISPLAY' || catName === 'DOVEMEN') return; 
-                
                 d.cat = catName;
                 activeCats.add(catName);
             }
@@ -337,7 +360,7 @@
     }
 
     // ======================================================================
-    // 4. BỘ LỌC (FILTERS)
+    // 5. BỘ LỌC (FILTERS)
     // ======================================================================
     function initFilters() {
         populateDropdown('flt-area', [...new Set(dbMaster.map(d => d.area))]);
@@ -373,7 +396,7 @@
     }
 
     // ======================================================================
-    // 5. THUẬT TOÁN TÍNH TỐI ƯU O(N) TÁCH THEO TỪNG NHÂN SỰ
+    // 6. THUẬT TOÁN TÍNH TỐI ƯU O(N) TÁCH THEO TỪNG NHÂN SỰ
     // ======================================================================
     function switchMainTab(tabId, btn) {
         currentMainTab = tabId;
@@ -434,7 +457,6 @@
             }
         });
 
-        // Đảm bảo những người có Coverage nhưng không có Sales vẫn hiện bảng trong Tab 1
         if (!isTab2) {
             Object.keys(entityCov).forEach(eName => {
                 if (!entities[eName]) entities[eName] = { area: entityCov[eName].area, brands: {} };
@@ -449,7 +471,7 @@
     }
 
     // ======================================================================
-    // 6. TÁCH BẢNG & RENDER UI
+    // 7. TÁCH BẢNG & RENDER UI
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
@@ -471,7 +493,6 @@
             let entityData = entities[eName];
             let brands = Object.keys(entityData.brands).sort();
             
-            // Tab 2: Nếu NV không bán được Brand nào thì không cần hiện bảng rỗng
             if (isTab2 && brands.length === 0) return;
 
             html += `<div class="entity-section">`;
@@ -520,7 +541,7 @@
 </script>
 
 <!-- ======================================================================
-     7. INDEXED-DB CACHE & SUPABASE LOADER
+     8. INDEXED-DB CACHE & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
@@ -528,7 +549,6 @@
     const CACHE_STORE = 'datasets';
     const CACHE_KEY = 'daily_rtm_data';
 
-    // Helper mở IndexedDB
     function getDB() {
         return new Promise((resolve, reject) => {
             let req = indexedDB.open(CACHE_DB, 1);
@@ -581,7 +601,6 @@
         var version = '?t=' + new Date().getTime();
         var localScripts = ['kamMap.js', 'cdmMap.js'];
 
-        // NẾU CÓ CACHE HÔM NAY -> BỎ QUA SUPABASE, CHỈ TẢI MAP TỪ GITHUB
         if (cachedData && cachedData.date === todayStr) {
             window.rawMasterCache = cachedData.rawMaster;
             window.rawSalesCache = cachedData.rawSales;
@@ -594,14 +613,13 @@
                     mapLoaded++;
                     if (file.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
                     if (file.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
-                    if (mapLoaded === localScripts.length) init(true); // True = Dùng Cache
+                    if (mapLoaded === localScripts.length) init(true);
                 };
                 document.body.appendChild(script);
             });
             return;
         }
 
-        // NẾU KHÔNG CÓ CACHE -> KÉO TỪ SUPABASE
         updateStatus('st_proc', '--primary');
         var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
         const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
@@ -624,8 +642,7 @@
                 if (item.url.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
                 if (item.url.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
                 if (loadedScripts === scriptsToLoad.length) {
-                    init(false); // False = Không dùng Cache, quét lần đầu
-                    // Lưu Cache cho lần sau
+                    init(false); 
                     saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
                 }
             };
