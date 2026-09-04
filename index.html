@@ -298,6 +298,7 @@
         return 0;
     }
 
+    // TÁCH ICON BẰNG REGEX (BẮT BUỘC TRACK 100% CẢ NHỮNG NGƯỜI KHÔNG CÓ ICON)
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
         let match = raw.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
@@ -318,16 +319,13 @@
             }
         }
         
-        if (icon && monthStr) {
+        // Luôn theo dõi tháng xuất hiện mới nhất của nhân sự (kể cả không có icon)
+        if (monthStr && cleanStr) {
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanStr] || statusTracker[cleanStr].month < mIdx) {
                 statusTracker[cleanStr] = { month: mIdx, icon: icon };
-                statusMap[cleanStr] = icon;
             } else if (statusTracker[cleanStr].month === mIdx) {
-                if (icon === '❌') {
-                    statusTracker[cleanStr].icon = '❌';
-                    statusMap[cleanStr] = '❌';
-                }
+                if (icon === '❌') statusTracker[cleanStr].icon = '❌';
             }
         }
         return cleanStr;
@@ -355,12 +353,8 @@
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanCdm] || statusTracker[cleanCdm].month < mIdx) {
                 statusTracker[cleanCdm] = { month: mIdx, icon: icon };
-                statusMap[cleanCdm] = icon;
             } else if (statusTracker[cleanCdm].month === mIdx) {
-                if (icon === '❌') {
-                    statusTracker[cleanCdm].icon = '❌';
-                    statusMap[cleanCdm] = '❌';
-                }
+                if (icon === '❌') statusTracker[cleanCdm].icon = '❌';
             }
         }
         return cleanCdm;
@@ -427,14 +421,18 @@
         TIME_COLS = Array.from(activeMonths).sort((a,b) => getMonthIndex(a) - getMonthIndex(b));
         CATS = Array.from(activeCats).sort();
 
-        // ÉP DẤU ❌ CHO NHỮNG NHÂN SỰ KHÔNG CÓ TRONG THÁNG MỚI NHẤT
+        // ---------------------------------------------------------
+        // CHỐT TRẠNG THÁI: AI KHÔNG CÓ TÊN Ở THÁNG CUỐI -> ÉP DẤU ❌
+        // ---------------------------------------------------------
         if (TIME_COLS.length > 0) {
             let latestGlobalMonthIdx = getMonthIndex(TIME_COLS[TIME_COLS.length - 1]);
             for (let name in statusTracker) {
                 if (statusTracker[name].month < latestGlobalMonthIdx) {
                     statusMap[name] = '❌'; 
                 } else {
-                    if (statusTracker[name].icon) statusMap[name] = statusTracker[name].icon;
+                    if (statusTracker[name].icon) {
+                        statusMap[name] = statusTracker[name].icon;
+                    }
                 }
             }
         }
@@ -671,11 +669,11 @@
 </script>
 
 <!-- ======================================================================
-     7. INDEXED-DB CACHE V3 & SUPABASE LOADER
+     7. INDEXED-DB CACHE V4 & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
-    const CACHE_DB = 'RTM_Cache_DB_V3'; 
+    const CACHE_DB = 'RTM_Cache_DB_V4'; // BẢN V4 XÓA KÝ ỨC CŨ
     const CACHE_STORE = 'datasets';
     const CACHE_KEY = 'daily_rtm_data';
 
