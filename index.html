@@ -296,12 +296,13 @@
     // TÁCH ICON BẰNG REGEX MỞ RỘNG (GẮN VÀO THÁNG MỚI NHẤT)
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
-        let match = raw.match(/[✔️✅❌✖️✕✓]/);
-        let cleanStr = raw.replace(/[✔️✅❌✖️✕✓]/g, '').trim();
+        // Bộ nhận diện mới (Bắt được mọi loại X và Tick)
+        let match = raw.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
+        let cleanStr = raw.replace(/[✔️✅☑️❌✖️✕✗✘✓]/g, '').trim();
         
         let icon = '';
         if (match) {
-            if (['❌', '✖️', '✕'].includes(match[0])) icon = '❌';
+            if (['❌', '✖️', '✕', '✗', '✘'].includes(match[0])) icon = '❌';
             else icon = '✔️';
         }
 
@@ -320,6 +321,7 @@
                 statusTracker[cleanStr] = { month: mIdx, icon: icon };
                 statusMap[cleanStr] = icon;
             } else if (statusTracker[cleanStr].month === mIdx) {
+                // Trong cùng 1 tháng, nếu vừa tick vừa cross -> ÉP SANG CROSS (Nghỉ)
                 if (icon === '❌') {
                     statusTracker[cleanStr].icon = '❌';
                     statusMap[cleanStr] = '❌';
@@ -339,11 +341,11 @@
             else if (cdmMap[cleanKam]) cdmName = cdmMap[cleanKam];
         }
 
-        let match = cdmName.match(/[✔️✅❌✖️✕✓]/);
-        let cleanCdm = cdmName.replace(/[✔️✅❌✖️✕✓]/g, '').trim();
+        let match = cdmName.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
+        let cleanCdm = cdmName.replace(/[✔️✅☑️❌✖️✕✗✘✓]/g, '').trim();
         let icon = '';
         if (match) {
-             if (['❌', '✖️', '✕'].includes(match[0])) icon = '❌';
+             if (['❌', '✖️', '✕', '✗', '✘'].includes(match[0])) icon = '❌';
              else icon = '✔️';
         }
         
@@ -390,7 +392,7 @@
             if(d.month) activeMonths.add(d.month);
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            // Giữ tên thô (chứa icon) cho các lần lấy Cache sau
+            // Giữ tên thô để chạy Cache
             d.raw_kam = d.raw_kam || d.kam || "";
             d.raw_kae = d.raw_kae || d.kae || "";
 
@@ -634,11 +636,11 @@
 </script>
 
 <!-- ======================================================================
-     7. INDEXED-DB CACHE & SUPABASE LOADER
+     7. INDEXED-DB CACHE V2 & SUPABASE LOADER
      ====================================================================== -->
 <script>
 (async function () {
-    const CACHE_DB = 'RTM_Cache_DB';
+    const CACHE_DB = 'RTM_Cache_DB_V2'; // ĐỔI TÊN ĐỂ XÓA TRÍ NHỚ BỊ LỖI CỦA TRÌNH DUYỆT
     const CACHE_STORE = 'datasets';
     const CACHE_KEY = 'daily_rtm_data';
 
