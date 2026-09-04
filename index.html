@@ -132,24 +132,20 @@
                 <p id="last-update-desc" style="color: var(--text-sub); margin: 5px 0 0 0; font-size: 12px; font-weight: 600;"></p>
             </div>
             <div class="settings-content">
-                <!-- Song ngữ -->
                 <div class="set-group">
                     <button class="set-btn" id="btn-en" onclick="changeLang('en')">EN</button> 
                     <button class="set-btn active" id="btn-vi" onclick="changeLang('vi')">VI</button>
                 </div>
                 <div class="status-divider"></div>
-                <!-- Sáng/Tối -->
                 <div class="set-group">
                     <button class="set-btn" id="btn-light" onclick="changeTheme('light')">Light</button> 
                     <button class="set-btn active" id="btn-dark" onclick="changeTheme('dark')">Dark</button>
                 </div>
                 <div class="status-divider"></div>
-                <!-- Cỡ chữ -->
                 <div class="set-group">
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
                 </div>
                 <div class="status-divider"></div>
-                <!-- Trạng thái -->
                 <div class="set-group">
                     <span id="st-supa" class="status-badge" style="color: var(--primary);" data-i18n="st_init">Đang khởi tạo kết nối...</span>
                 </div>
@@ -180,20 +176,17 @@
         </div>
     </div>
 
-    <!-- MAIN TABS -->
     <div class="main-tabs">
         <button class="tab-btn active" onclick="switchMainTab('tab_overview', this)" data-i18n="tab_overview">OVERVIEW</button>
         <button class="tab-btn" onclick="switchMainTab('tab_brand', this)" data-i18n="tab_brand">BY BRAND</button>
     </div>
 
-    <!-- SUB TABS -->
     <div class="sub-tabs">
         <button class="sub-tab-btn active" onclick="switchSubTab('cdm', this)">BY CDM</button>
         <button class="sub-tab-btn" onclick="switchSubTab('kam', this)">BY KAM</button>
         <button class="sub-tab-btn" onclick="switchSubTab('kae', this)">BY SALES TEAM</button>
     </div>
 
-    <!-- VÙNG RENDER BẢNG (MỖI NHÂN SỰ 1 BẢNG) -->
     <div id="table-wrapper-main"></div>
 
 </div>
@@ -204,7 +197,6 @@
     // ======================================================================
     let dbMaster = [], dbSales = [];
     
-    // Hệ thống Tracking Trạng thái Nhân sự thông minh (Ưu tiên tháng mới nhất)
     let statusMap = {}; 
     let statusTracker = {}; 
     
@@ -219,7 +211,6 @@
         let utc = d.getTime() + (d.getTimezoneOffset() * 60000);
         let gmt7Date = new Date(utc + (3600000 * 7)); 
         gmt7Date.setDate(gmt7Date.getDate() - 1);     
-        
         let day = String(gmt7Date.getDate()).padStart(2, '0');
         let month = String(gmt7Date.getMonth() + 1).padStart(2, '0');
         let year = gmt7Date.getFullYear();
@@ -257,7 +248,6 @@
             let key = el.getAttribute('data-i18n');
             if (dict[currentLang][key]) el.innerText = dict[currentLang][key];
         });
-
         document.getElementById('last-update-desc').innerText = dict[currentLang]['desc'] + lastUpdateDateStr;
         if(dbMaster && dbMaster.length > 0) renderActiveTab();
     }
@@ -303,12 +293,18 @@
         return 0;
     }
 
-    // TÁCH ICON ✔️ ❌ VÀ LƯU VÀO STATUS_MAP (UPDATE THEO THÁNG MỚI NHẤT)
+    // TÁCH ICON BẰNG REGEX MỞ RỘNG (GẮN VÀO THÁNG MỚI NHẤT)
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
-        let match = raw.match(/[✔️❌]/);
-        let cleanStr = raw.replace(/[✔️❌]/g, '').trim();
+        let match = raw.match(/[✔️✅❌✖️✕✓]/);
+        let cleanStr = raw.replace(/[✔️✅❌✖️✕✓]/g, '').trim();
         
+        let icon = '';
+        if (match) {
+            if (['❌', '✖️', '✕'].includes(match[0])) icon = '❌';
+            else icon = '✔️';
+        }
+
         if (isKamField) {
             cleanStr = cleanStr.toUpperCase(); 
             if (typeof kamMap !== 'undefined') {
@@ -318,14 +314,13 @@
             }
         }
         
-        if (match && monthStr) {
+        if (icon && monthStr) {
             let mIdx = getMonthIndex(monthStr);
-            // Ghi đè nếu tháng mới hơn. Nếu bằng tháng nhưng có X thì ưu tiên X.
             if (!statusTracker[cleanStr] || statusTracker[cleanStr].month < mIdx) {
-                statusTracker[cleanStr] = { month: mIdx, icon: match[0] };
-                statusMap[cleanStr] = match[0];
+                statusTracker[cleanStr] = { month: mIdx, icon: icon };
+                statusMap[cleanStr] = icon;
             } else if (statusTracker[cleanStr].month === mIdx) {
-                if (match[0] === '❌') {
+                if (icon === '❌') {
                     statusTracker[cleanStr].icon = '❌';
                     statusMap[cleanStr] = '❌';
                 }
@@ -334,7 +329,7 @@
         return cleanStr;
     };
 
-    const getCdm = (cleanKam, areaName, monthStr = "") => {
+    const getCdm = (cleanKam, areaName, monthStr = "", rawKam = "") => {
         let cdmName = "Chưa phân bổ CDM";
         if (typeof cdmMap !== 'undefined') {
             let exactAreaKey = String(areaName || "").trim() + "|" + cleanKam;
@@ -344,17 +339,21 @@
             else if (cdmMap[cleanKam]) cdmName = cdmMap[cleanKam];
         }
 
-        // CDM cũng lưu trạng thái nếu file map có chứa icon
-        let match = cdmName.match(/[✔️❌]/);
-        let cleanCdm = cdmName.replace(/[✔️❌]/g, '').trim();
+        let match = cdmName.match(/[✔️✅❌✖️✕✓]/);
+        let cleanCdm = cdmName.replace(/[✔️✅❌✖️✕✓]/g, '').trim();
+        let icon = '';
+        if (match) {
+             if (['❌', '✖️', '✕'].includes(match[0])) icon = '❌';
+             else icon = '✔️';
+        }
         
-        if (match && monthStr) {
+        if (icon && monthStr) {
             let mIdx = getMonthIndex(monthStr);
             if (!statusTracker[cleanCdm] || statusTracker[cleanCdm].month < mIdx) {
-                statusTracker[cleanCdm] = { month: mIdx, icon: match[0] };
-                statusMap[cleanCdm] = match[0];
+                statusTracker[cleanCdm] = { month: mIdx, icon: icon };
+                statusMap[cleanCdm] = icon;
             } else if (statusTracker[cleanCdm].month === mIdx) {
-                if (match[0] === '❌') {
+                if (icon === '❌') {
                     statusTracker[cleanCdm].icon = '❌';
                     statusMap[cleanCdm] = '❌';
                 }
@@ -364,7 +363,7 @@
     };
 
     // ======================================================================
-    // 3. ENGINE XỬ LÝ (TÍCH HỢP CACHE VÀ LỌC DOVEMEN)
+    // 3. ENGINE XỬ LÝ (GIỮ NGUYÊN TÊN GỐC DÀNH CHO CACHE)
     // ======================================================================
     function init(useCache = false) {
         updateStatus('st_proc', '--primary');
@@ -385,20 +384,22 @@
             window.rawSalesCache = rawSalesData;
         }
 
-        // Quét dbMaster
         rawMasterData.forEach(d => {
             if(!d || !d.cusCode) return;
             d.month = (d.month || "").toString().trim();
             if(d.month) activeMonths.add(d.month);
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            d.kam = cleanName(d.kam, true, d.area, d.month);
-            d.cdm = getCdm(d.kam, d.area, d.month); 
-            d.kae = cleanName(d.kae, false, d.area, d.month);
+            // Giữ tên thô (chứa icon) cho các lần lấy Cache sau
+            d.raw_kam = d.raw_kam || d.kam || "";
+            d.raw_kae = d.raw_kae || d.kae || "";
+
+            d.kam = cleanName(d.raw_kam, true, d.area, d.month);
+            d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
+            d.kae = cleanName(d.raw_kae, false, d.area, d.month);
             dbMaster.push(d);
         });
 
-        // Quét dbSales (Chặn DISPLAY và DOVEMEN)
         rawSalesData.forEach(d => {
             if(!d || !d.cusCode) return;
             if(d.cat) {
@@ -410,9 +411,12 @@
             d.month = (d.month || "").toString().trim();
             d.area = d.area ? String(d.area).trim() : "Unknown Area";
             
-            d.kam = cleanName(d.kam, true, d.area, d.month);
-            d.cdm = getCdm(d.kam, d.area, d.month); 
-            d.kae = cleanName(d.kae, false, d.area, d.month);
+            d.raw_kam = d.raw_kam || d.kam || "";
+            d.raw_kae = d.raw_kae || d.kae || "";
+
+            d.kam = cleanName(d.raw_kam, true, d.area, d.month);
+            d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
+            d.kae = cleanName(d.raw_kae, false, d.area, d.month);
             d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
             dbSales.push(d);
         });
