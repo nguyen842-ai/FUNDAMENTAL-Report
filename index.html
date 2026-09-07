@@ -47,9 +47,11 @@
         .set-btn:hover { background: var(--badge-bg); }
         .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         
-        /* Nút Refresh Data nổi bật */
+        /* Nút Refresh & Print */
         .btn-refresh { color: var(--warning-border); border-color: var(--warning-border); display: flex; align-items: center; gap: 5px;}
         .btn-refresh:hover { background: var(--warning-bg); color: #ea580c; border-color: #ea580c;}
+        .btn-print { color: var(--primary); border-color: var(--primary); display: flex; align-items: center; gap: 5px;}
+        .btn-print:hover { background: rgba(59, 130, 246, 0.1); }
 
         input[type="range"] { cursor: pointer; max-width: 80px;}
 
@@ -154,6 +156,35 @@
         .special-group { border-color: rgba(59, 130, 246, 0.3); }
         .special-summary { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
         .special-summary:hover { background: rgba(59, 130, 246, 0.15); }
+
+        /* =========================================================
+           6. CẤU HÌNH KHI IN / XUẤT PDF
+           ========================================================= */
+        @media print {
+            body { background: white !important; color: black !important; font-size: 11px !important; }
+            /* Ẩn các phần không cần thiết */
+            .header, .main-tabs, .sub-tabs { display: none !important; }
+            .container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+            
+            /* Tối ưu bảng hiển thị */
+            .table-container { box-shadow: none !important; border: none !important; max-height: none !important; overflow: visible !important;}
+            table { border-collapse: collapse !important; width: 100% !important; min-width: auto !important; }
+            th, td { padding: 8px !important; border: 1px solid #ccc !important; }
+            th { position: static !important; background: #e2e8f0 !important; color: black !important; }
+            .col-sticky-1, .col-sticky-2 { position: static !important; background: transparent !important; }
+            .entity-section { page-break-inside: avoid; margin-bottom: 25px !important; }
+            .entity-title { background: #cbd5e1 !important; color: black !important; border: 1px solid #ccc !important; }
+            
+            /* Tối ưu Accordion (Luôn mở khi in) */
+            .acc-group { border: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; }
+            .acc-summary { background: #cbd5e1 !important; color: black !important; border: 1px solid #ccc !important; font-size: 1em !important; padding: 10px !important; }
+            .acc-summary::before { display: none !important; }
+            .acc-content { padding: 10px 0 !important; background: white !important; display: block !important; }
+            
+            /* Xoá màu nền/text riêng để in rõ */
+            .val-primary, .val-success, .metric-name { color: black !important; font-weight: normal !important; }
+            .row-highlight { background: transparent !important; }
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -180,6 +211,16 @@
                     <input type="range" id="fontSizeSlider" min="11" max="16" value="13" oninput="changeFontSize(this.value)"> 
                 </div>
                 <div class="status-divider"></div>
+
+                <!-- NÚT IN / TẢI PDF -->
+                <div class="set-group">
+                    <button class="set-btn btn-print" onclick="printReport()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span data-i18n="btn_print">In / Tải PDF</span>
+                    </button>
+                </div>
+                <div class="status-divider"></div>
+
                 <!-- NÚT LÀM MỚI DATA -->
                 <div class="set-group">
                     <button class="set-btn btn-refresh" onclick="forceRefreshData()">
@@ -244,7 +285,7 @@
     // ======================================================================
     // 0. BIẾN TOÀN CỤC & TÍNH NGÀY THÁNG
     // ======================================================================
-    const CACHE_DB_VERSION = 'RTM_Cache_DB_V5'; // NÂNG CẤP XÓA SẠCH LỖI CŨ
+    const CACHE_DB_VERSION = 'RTM_Cache_DB_V5';
     let dbMaster = [], dbSales = [];
     
     let statusMap = {}; 
@@ -279,6 +320,7 @@
             inactive_staff: "Nhân sự thôi việc / Không hoạt động",
             special_perf: "Special Performance",
             btn_refresh: "Làm mới Data",
+            btn_print: "In / Tải PDF",
             confirm_refresh: "Xóa bộ nhớ đệm và tải lại dữ liệu mới nhất từ hệ thống?"
         },
         en: {
@@ -289,6 +331,7 @@
             inactive_staff: "Resigned / Inactive Staff",
             special_perf: "Special Performance",
             btn_refresh: "Refresh Data",
+            btn_print: "Print / Save PDF",
             confirm_refresh: "Clear cache and fetch the latest data from server?"
         }
     };
@@ -337,13 +380,19 @@
         }, 10); 
     }
 
-    // Nút Xóa Cache thủ công
     function forceRefreshData() {
         if(confirm(dict[currentLang]['confirm_refresh'])) {
             let req = indexedDB.deleteDatabase(CACHE_DB_VERSION);
             req.onsuccess = function () { location.reload(); };
             req.onerror = function () { location.reload(); };
         }
+    }
+
+    // Hàm gọi in / xuất PDF
+    function printReport() {
+        // Tự động mở rộng các Accordion đang ẩn để in đầy đủ
+        document.querySelectorAll('details.acc-group').forEach(el => el.setAttribute('open', ''));
+        window.print();
     }
 
     const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
@@ -358,7 +407,6 @@
         return 0;
     }
 
-    // TÁCH ICON BẰNG REGEX & LUÔN TRACK TẤT CẢ MỌI NGƯỜI
     const cleanName = (name, isKamField = false, areaName = "", monthStr = "") => {
         let raw = String(name || "").trim();
         let match = raw.match(/[✔️✅☑️❌✖️✕✗✘✓]/);
@@ -532,19 +580,16 @@
         }
     }
 
-    // Đóng mở menu KAE
     function toggleKaeMenu() {
         document.getElementById('kae-multi-select').classList.toggle('open');
     }
 
-    // Đóng menu khi click ra ngoài
     document.addEventListener('click', function(e) {
         if(!e.target.closest('#kae-multi-select')) {
             document.getElementById('kae-multi-select').classList.remove('open');
         }
     });
 
-    // Hàm tạo danh sách checkbox cho KAE
     function populateKaeDropdown(options) {
         let container = document.getElementById('kae-options');
         let html = `
@@ -564,29 +609,26 @@
         updateKaeDisplay();
     }
 
-    // Xử lý khi bấm nút "Tất cả"
     function handleKaeAll(cb) {
         let chks = document.querySelectorAll('.kae-chk');
-        chks.forEach(c => c.checked = false); // Tắt các tuỳ chọn lẻ
+        chks.forEach(c => c.checked = false); 
         cb.checked = true;
         updateKaeDisplay();
         userTriggerUpdate('kae');
     }
 
-    // Xử lý khi bấm chọn các KAE riêng lẻ
     function handleKaeItem() {
         let allCb = document.getElementById('kae-all');
         let chks = document.querySelectorAll('.kae-chk:checked');
         if(chks.length > 0) {
-            allCb.checked = false; // Bỏ chọn nút Tất cả
+            allCb.checked = false; 
         } else {
-            allCb.checked = true; // Bật lại Tất cả nếu không có gì được chọn
+            allCb.checked = true; 
         }
         updateKaeDisplay();
         userTriggerUpdate('kae');
     }
 
-    // Cập nhật text hiển thị (bao nhiêu người đã chọn)
     function updateKaeDisplay() {
         let allCb = document.getElementById('kae-all');
         let display = document.getElementById('kae-display');
@@ -598,7 +640,6 @@
         }
     }
 
-    // Lấy mảng dữ liệu KAE đang được chọn
     function getKaeValues() {
         let allCb = document.getElementById('kae-all');
         if (!allCb || allCb.checked) return ['ALL'];
