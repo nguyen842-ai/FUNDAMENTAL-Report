@@ -521,7 +521,7 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
-            d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.month + '|' + (d.week || ''));
+            d.invId = d.invoiceId || d.invId || d.orderId || (d.cusCode + '|' + d.date);
             dbSales.push(d);
         });
 
