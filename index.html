@@ -65,6 +65,32 @@
         .filter-group select { padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); outline: none; font-size: 1em; background: var(--badge-bg); color: var(--text-main); transition: 0.2s; font-weight: 600;}
         .filter-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); background: var(--white);}
         
+        /* CUSTOM MULTI-SELECT KAE/DSR */
+        .custom-multi-select { position: relative; width: 100%; min-width: 180px; }
+        .select-box { 
+            padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); 
+            background: var(--badge-bg); color: var(--text-main); cursor: pointer; 
+            font-weight: 600; font-size: 1em; display: flex; justify-content: space-between; 
+            align-items: center; transition: 0.2s;
+        }
+        .select-box:hover, .custom-multi-select.open .select-box { 
+            border-color: var(--primary); background: var(--white); 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); 
+        }
+        .select-box::after { content: "▼"; font-size: 10px; color: var(--text-sub); }
+        .options-container { 
+            display: none; position: absolute; top: calc(100% + 5px); left: 0; right: 0; 
+            background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-md); 
+            max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: var(--card-shadow); padding: 8px; 
+        }
+        .custom-multi-select.open .options-container { display: block; }
+        .option-item { 
+            display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; 
+            color: var(--text-main); border-radius: 6px; font-weight: 500; transition: 0.2s; margin-bottom: 2px;
+        }
+        .option-item:hover { background: var(--badge-bg); }
+        .option-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+
         /* =========================================================
            4. MAIN TABS & SUB TABS
            ========================================================= */
@@ -183,7 +209,14 @@
             </div>
             <div class="filter-group">
                 <label>KAE/DSR</label>
-                <select id="flt-kae" onchange="userTriggerUpdate('kae')"><option value="ALL">-- Tất cả --</option></select>
+                <div class="custom-multi-select" id="kae-multi-select">
+                    <div class="select-box" onclick="toggleKaeMenu()">
+                        <span id="kae-display">-- Tất cả --</span>
+                    </div>
+                    <div class="options-container" id="kae-options">
+                        <!-- JS sẽ render checkbox vào đây -->
+                    </div>
+                </div>
             </div>
             <div class="filter-group" id="filter-cat-container">
                 <label>Category (Brand)</label>
@@ -468,8 +501,8 @@
     // ======================================================================
     function initFilters() {
         populateDropdown('flt-area', [...new Set(dbMaster.map(d => d.area))]);
-        updateDropdowns('area');
         populateDropdown('flt-cat', CATS);
+        updateDropdowns('area');
     }
 
     function populateDropdown(id, options) {
@@ -490,13 +523,86 @@
         if (changedLevel === 'area') {
             populateDropdown('flt-cdm', [...new Set(filtered.map(d => d.cdm))]);
             populateDropdown('flt-kam', [...new Set(filtered.map(d => d.kam))]);
-            populateDropdown('flt-kae', [...new Set(filtered.map(d => d.kae))]);
+            populateKaeDropdown([...new Set(filtered.map(d => d.kae))]);
         } else if (changedLevel === 'cdm') {
             populateDropdown('flt-kam', [...new Set(filtered.map(d => d.kam))]);
-            populateDropdown('flt-kae', [...new Set(filtered.map(d => d.kae))]);
+            populateKaeDropdown([...new Set(filtered.map(d => d.kae))]);
         } else if (changedLevel === 'kam') {
-            populateDropdown('flt-kae', [...new Set(filtered.map(d => d.kae))]);
+            populateKaeDropdown([...new Set(filtered.map(d => d.kae))]);
         }
+    }
+
+    // Đóng mở menu KAE
+    function toggleKaeMenu() {
+        document.getElementById('kae-multi-select').classList.toggle('open');
+    }
+
+    // Đóng menu khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if(!e.target.closest('#kae-multi-select')) {
+            document.getElementById('kae-multi-select').classList.remove('open');
+        }
+    });
+
+    // Hàm tạo danh sách checkbox cho KAE
+    function populateKaeDropdown(options) {
+        let container = document.getElementById('kae-options');
+        let html = `
+            <label class="option-item">
+                <input type="checkbox" id="kae-all" value="ALL" onchange="handleKaeAll(this)" checked>
+                <span>-- Tất cả --</span>
+            </label>`;
+        
+        options.filter(Boolean).sort().forEach(o => {
+            html += `
+                <label class="option-item">
+                    <input type="checkbox" class="kae-chk" value="${o}" onchange="handleKaeItem()">
+                    <span>${o}</span>
+                </label>`;
+        });
+        container.innerHTML = html;
+        updateKaeDisplay();
+    }
+
+    // Xử lý khi bấm nút "Tất cả"
+    function handleKaeAll(cb) {
+        let chks = document.querySelectorAll('.kae-chk');
+        chks.forEach(c => c.checked = false); // Tắt các tuỳ chọn lẻ
+        cb.checked = true;
+        updateKaeDisplay();
+        userTriggerUpdate('kae');
+    }
+
+    // Xử lý khi bấm chọn các KAE riêng lẻ
+    function handleKaeItem() {
+        let allCb = document.getElementById('kae-all');
+        let chks = document.querySelectorAll('.kae-chk:checked');
+        if(chks.length > 0) {
+            allCb.checked = false; // Bỏ chọn nút Tất cả
+        } else {
+            allCb.checked = true; // Bật lại Tất cả nếu không có gì được chọn
+        }
+        updateKaeDisplay();
+        userTriggerUpdate('kae');
+    }
+
+    // Cập nhật text hiển thị (bao nhiêu người đã chọn)
+    function updateKaeDisplay() {
+        let allCb = document.getElementById('kae-all');
+        let display = document.getElementById('kae-display');
+        if (allCb && allCb.checked) {
+            display.innerText = "-- Tất cả --";
+        } else {
+            let count = document.querySelectorAll('.kae-chk:checked').length;
+            display.innerText = count + " KAE đã chọn";
+        }
+    }
+
+    // Lấy mảng dữ liệu KAE đang được chọn
+    function getKaeValues() {
+        let allCb = document.getElementById('kae-all');
+        if (!allCb || allCb.checked) return ['ALL'];
+        return Array.from(document.querySelectorAll('.kae-chk:checked')).map(c => c.value);
     }
 
     // ======================================================================
@@ -519,13 +625,14 @@
     function compileData(isTab2, groupKey) {
         let entities = {}; 
         let entityCov = {};
-        let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fKae = getVal('flt-kae'), fCat = getVal('flt-cat');
+        let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fCat = getVal('flt-cat');
+        let fKae = getKaeValues();
 
         dbMaster.forEach(d => {
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
             if (fKam !== 'ALL' && d.kam !== fKam) return;
-            if (fKae !== 'ALL' && d.kae !== fKae) return;
+            if (!fKae.includes('ALL') && !fKae.includes(d.kae)) return;
 
             let eName = d[groupKey];
             if (!entityCov[eName]) {
@@ -539,7 +646,7 @@
             if (fArea !== 'ALL' && d.area !== fArea) return;
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
             if (fKam !== 'ALL' && d.kam !== fKam) return;
-            if (fKae !== 'ALL' && d.kae !== fKae) return;
+            if (!fKae.includes('ALL') && !fKae.includes(d.kae)) return;
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
