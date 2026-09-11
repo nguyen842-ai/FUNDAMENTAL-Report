@@ -485,6 +485,7 @@
             if (typeof dbMasterM6 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM6); rawSalesData = rawSalesData.concat(dbSalesM6); }
             if (typeof dbMasterM7 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM7); rawSalesData = rawSalesData.concat(dbSalesM7); }
             if (typeof dbMasterM8 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM8); rawSalesData = rawSalesData.concat(dbSalesM8); }
+            if (typeof dbMasterM9 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM9); rawSalesData = rawSalesData.concat(dbSalesM9); }
             window.rawMasterCache = rawMasterData;
             window.rawSalesCache = rawSalesData;
         }
@@ -917,7 +918,7 @@
         }
 
         updateStatus('st_proc', '--primary');
-        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js']; 
+        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js', 'dataM9.js']; 
         const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
         if (error || !signedUrlsData) throw error;
 
