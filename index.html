@@ -790,7 +790,14 @@
                             if (i === 0) val = fmt(cov); 
                             else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
                             else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
-                            else if (i === 3) val = fmtFloat(invs > 0 ? (skus/invs) : 0); 
+                           else if (i === 3) {
+    // Nếu là nhãn M150 và có phát sinh hóa đơn (invs > 0) thì ép cứng bằng 1
+    if (bName.toUpperCase() === 'M150' && invs > 0) {
+        val = fmtFloat(1);
+    } else {
+        val = fmtFloat(invs > 0 ? (skus/invs) : 0);
+    }
+}
                             else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
                             else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
                             rHtml += `<td>${val}</td>`;
