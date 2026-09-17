@@ -33,7 +33,7 @@ const cdmMap = {
 "1. HA NOI|PHẠM VĂN QUÂN": "PHẠM VĂN QUÂN",
 "1. HA NOI|VŨ TUYẾT HIỀN": "VŨ TUYẾT HIỀN",
 "4. NORTH EAST|NGUYỄN ĐÌNH THÁI": "Vacant CDM NE",
-"3. SOUTH MEKONG|TRẦN THANH NHÃ": "TRẦN THANH NHÃT",
+"3. SOUTH MEKONG|TRẦN THANH NHÃ": "TRẦN THANH NHÃ",
 "4. EASTERN|VÕ THỊ THANH TRÀ": "VÕ THỊ THANH TRÀ",
 
 };
