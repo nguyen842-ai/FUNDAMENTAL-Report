@@ -698,14 +698,15 @@
             
             if (!entities[eName].brands[bKey]) {
                 entities[eName].brands[bKey] = { m: {} };
-                TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
+                TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, invMap: new Map() });
             }
-
-            if (TIME_COLS.includes(d.month)) {
-                let mx = entities[eName].brands[bKey].m[d.month];
-                mx.actSet.add(d.cusCode);
-                mx.sales += (d.sales || 0); mx.skus += (d.skuLines || 0); mx.invSet.add(d.invId);
-            }
+        if (TIME_COLS.includes(d.month)) {
+    let mx = entities[eName].brands[bKey].m[d.month];
+    mx.actSet.add(d.cusCode);
+    mx.sales += (d.sales || 0); 
+    mx.invMap.set(d.invId, d.skuLines || 0); // Ghi đè số SKU theo ID Hóa đơn, tự động khử trùng lặp
+}
+            
         });
 
         if (!isTab2) {
@@ -784,8 +785,9 @@
                         TIME_COLS.forEach(m => {
                             let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
                             let mx = bData.m[m];
-                            let act = mx.actSet.size, sls = mx.sales, invs = mx.invSet.size, skus = mx.skus;
-                            
+let act = mx.actSet.size, sls = mx.sales, invs = mx.invMap.size;
+let skus = 0;
+mx.invMap.forEach(val => skus += val); // Cộng lại chuẩn xác từ các hóa đơn đã lọc trùng
                             let val = 0;
                             if (i === 0) val = fmt(cov); 
                             else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
