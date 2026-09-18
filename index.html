@@ -502,7 +502,9 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
-            dbMaster.push(d);
+            d.invId = `${d.area || ''}_${d.kam || ''}_${d.cusCode}_${d.day || ''}_${d.week || d.wiso || ''}_${d.month || ''}`;
+            
+            dbSales.push(d);
         });
 
         rawSalesData.forEach(d => {
