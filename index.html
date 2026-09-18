@@ -664,7 +664,7 @@
         executeWithLoading(renderActiveTab);
     }
 
-    function compileData(isTab2, groupKey) {
+   function compileData(isTab2, groupKey) {
         let entities = {}; 
         let entityCov = {};
         let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fCat = getVal('flt-cat');
@@ -698,15 +698,19 @@
             
             if (!entities[eName].brands[bKey]) {
                 entities[eName].brands[bKey] = { m: {} };
-                TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, invMap: new Map() });
+                // Khởi tạo invMap là một Object {}
+                TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, invMap: {} });
             }
-        if (TIME_COLS.includes(d.month)) {
-    let mx = entities[eName].brands[bKey].m[d.month];
-    mx.actSet.add(d.cusCode);
-    mx.sales += (d.sales || 0); 
-    mx.invMap.set(d.invId, d.skuLines || 0); // Ghi đè số SKU theo ID Hóa đơn, tự động khử trùng lặp
-}
-            
+
+            if (TIME_COLS.includes(d.month)) {
+                let mx = entities[eName].brands[bKey].m[d.month];
+                mx.actSet.add(d.cusCode);
+                mx.sales += (d.sales || 0); 
+                
+                // Gom nhóm theo ID hóa đơn và lấy giá trị SKU lớn nhất
+                if (!mx.invMap[d.invId]) mx.invMap[d.invId] = 0;
+                mx.invMap[d.invId] = Math.max(mx.invMap[d.invId], (d.skuLines || 0));
+            }
         });
 
         if (!isTab2) {
@@ -714,7 +718,8 @@
                 if (!entities[eName]) entities[eName] = { area: entityCov[eName].area, brands: {} };
                 if (!entities[eName].brands['OVERVIEW']) {
                      entities[eName].brands['OVERVIEW'] = { m: {} };
-                     TIME_COLS.forEach(m => entities[eName].brands['OVERVIEW'].m[m] = { actSet: new Set(), sales: 0, skus: 0, invSet: new Set() });
+                     // Sửa khởi tạo invMap cho OVERVIEW
+                     TIME_COLS.forEach(m => entities[eName].brands['OVERVIEW'].m[m] = { actSet: new Set(), sales: 0, invMap: {} });
                 }
             });
         }
@@ -722,7 +727,7 @@
         return { entities, entityCov };
     }
 
-    // ======================================================================
+  // ======================================================================
     // 6. RENDER GIAO DIỆN CÓ GOM NHÓM
     // ======================================================================
     function renderActiveTab() {
@@ -785,21 +790,30 @@
                         TIME_COLS.forEach(m => {
                             let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
                             let mx = bData.m[m];
-let act = mx.actSet.size, sls = mx.sales, invs = mx.invMap.size;
-let skus = 0;
-mx.invMap.forEach(val => skus += val); // Cộng lại chuẩn xác từ các hóa đơn đã lọc trùng
+                            
+                            // 1. Gán biến cơ bản
+                            let act = mx.actSet.size;
+                            let sls = mx.sales;
+                            
+                            // 2. Tính số lượng hóa đơn và tổng SKU
+                            let invKeys = Object.keys(mx.invMap);
+                            let invs = invKeys.length;
+                            
+                            let skus = 0;
+                            invKeys.forEach(k => { skus += mx.invMap[k]; });
+                            
                             let val = 0;
                             if (i === 0) val = fmt(cov); 
                             else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
                             else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
-                           else if (i === 3) {
-    // Nếu là nhãn M150 và có phát sinh hóa đơn (invs > 0) thì ép cứng bằng 1
-    if (bName.toUpperCase() === 'M150' && invs > 0) {
-        val = fmtFloat(1);
-    } else {
-        val = fmtFloat(invs > 0 ? (skus/invs) : 0);
-    }
-}
+                            else if (i === 3) {
+                                // Nếu là nhãn M150 và có phát sinh hóa đơn (invs > 0) thì ép cứng bằng 1
+                                if (bName.toUpperCase() === 'M150' && invs > 0) {
+                                    val = fmtFloat(1);
+                                } else {
+                                    val = fmtFloat(invs > 0 ? (skus/invs) : 0);
+                                }
+                            }
                             else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
                             else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
                             rHtml += `<td>${val}</td>`;
