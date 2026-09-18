@@ -502,9 +502,7 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
-            d.invId = `${d.area || ''}_${d.kam || ''}_${d.cusCode}_${d.day || ''}_${d.week || d.wiso || ''}_${d.month || ''}`;
-            
-            dbSales.push(d);
+            dbMaster.push(d);
         });
 
         rawSalesData.forEach(d => {
@@ -524,7 +522,10 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
-            d.invId = `${d.cusCode}_${d.day || ''}_${d.week || d.wiso || ''}_${d.month || ''}`;
+            
+            // Tối ưu tạo InvId kết hợp Area, KAM để chống trùng lặp giữa các CDM
+            d.invId = `${d.area || ''}_${d.kam || ''}_${d.cusCode}_${d.day || ''}_${d.week || d.wiso || ''}_${d.month || ''}`;
+            
             dbSales.push(d);
         });
 
@@ -700,18 +701,24 @@
             
             if (!entities[eName].brands[bKey]) {
                 entities[eName].brands[bKey] = { m: {} };
-                // Khởi tạo invMap là một Object {}
                 TIME_COLS.forEach(m => entities[eName].brands[bKey].m[m] = { actSet: new Set(), sales: 0, invMap: {} });
             }
 
             if (TIME_COLS.includes(d.month)) {
                 let mx = entities[eName].brands[bKey].m[d.month];
-                mx.actSet.add(d.cusCode);
-                mx.sales += (d.sales || 0); 
+                let currentSales = Number(d.sales) || 0;
                 
-                // Gom nhóm theo ID hóa đơn và cộng dồn số dòng SKU
-if (!mx.invMap[d.invId]) mx.invMap[d.invId] = 0;
-mx.invMap[d.invId] += (Number(d.skuLines) || 0);
+                // 1. Vẫn cộng dồn doanh số tổng
+                mx.sales += currentSales; 
+                
+                // 2. CHỈ đếm Khách Active và đếm SKU/Hóa đơn KHI CÓ DOANH SỐ > 0
+                if (currentSales > 0) {
+                    mx.actSet.add(d.cusCode);
+                    
+                    // Gom nhóm theo ID hóa đơn và cộng dồn số dòng SKU
+                    if (!mx.invMap[d.invId]) mx.invMap[d.invId] = 0;
+                    mx.invMap[d.invId] += (Number(d.skuLines) || 0);
+                }
             }
         });
 
@@ -720,7 +727,6 @@ mx.invMap[d.invId] += (Number(d.skuLines) || 0);
                 if (!entities[eName]) entities[eName] = { area: entityCov[eName].area, brands: {} };
                 if (!entities[eName].brands['OVERVIEW']) {
                      entities[eName].brands['OVERVIEW'] = { m: {} };
-                     // Sửa khởi tạo invMap cho OVERVIEW
                      TIME_COLS.forEach(m => entities[eName].brands['OVERVIEW'].m[m] = { actSet: new Set(), sales: 0, invMap: {} });
                 }
             });
