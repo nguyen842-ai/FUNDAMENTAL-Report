@@ -486,6 +486,9 @@
             if (typeof dbMasterM7 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM7); rawSalesData = rawSalesData.concat(dbSalesM7); }
             if (typeof dbMasterM8 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM8); rawSalesData = rawSalesData.concat(dbSalesM8); }
             if (typeof dbMasterM9 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM9); rawSalesData = rawSalesData.concat(dbSalesM9); }
+            if (typeof dbMasterM10 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM10); rawSalesData = rawSalesData.concat(dbSalesM10); }
+            if (typeof dbMasterM11 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM11); rawSalesData = rawSalesData.concat(dbSalesM11); }
+            if (typeof dbMasterM12 !== 'undefined') { rawMasterData = rawMasterData.concat(dbMasterM12); rawSalesData = rawSalesData.concat(dbSalesM12); }
             window.rawMasterCache = rawMasterData;
             window.rawSalesCache = rawSalesData;
         }
@@ -949,43 +952,47 @@
         }
 
         updateStatus('st_proc', '--primary');
-        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js', 'dataM9.js']; 
+        var secureDataFiles = ['dataM5.js', 'dataM6.js', 'dataM7.js', 'dataM8.js', 'dataM9.js', 'dataM10.js', 'dataM11.js', 'dataM12.js'];
         const { data: signedUrlsData, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrls(secureDataFiles, 60);
         if (error || !signedUrlsData) throw error;
 
         var scriptsToLoad = [];
         localScripts.forEach(file => scriptsToLoad.push({ url: file + version, type: 'local' }));
+        // Bỏ lệnh throw new Error để không chết app khi thiếu file trên Supabase
         signedUrlsData.forEach(item => {
-            if (item.error) throw new Error(item.path);
-            scriptsToLoad.push({ url: item.signedUrl, type: 'secure' });
+            if (!item.error && item.signedUrl) {
+                scriptsToLoad.push({ url: item.signedUrl, type: 'secure' });
+            } else {
+                console.warn("Bỏ qua file không tìm thấy trên server: ", item.path);
+            }
         });
 
         var loadedScripts = 0, hasError = false;
         scriptsToLoad.forEach(function(item) {
             var script = document.createElement('script');
             script.src = item.url;
+            
             script.onload = function() {
                 if (hasError) return;
                 loadedScripts++;
-                if (item.url.includes('cdmMap') && typeof cdmMap === 'undefined') window.cdmMap = {};
-                if (item.url.includes('kamMap') && typeof kamMap === 'undefined') window.kamMap = {};
+                if (item.url.includes('cdmMap')) window.cdmMap = {};
+                if (item.url.includes('kamMap')) window.kamMap = {};
                 if (loadedScripts === scriptsToLoad.length) {
                     init(false); 
                     saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
                 }
             };
+            
+            // Xử lý khi thẻ script không tải được (lỗi 404, mất mạng)
             script.onerror = function() {
-                if (item.type === 'local') {
-                    if (item.url.includes('cdmMap')) window.cdmMap = {}; 
-                    if (item.url.includes('kamMap')) window.kamMap = {};
-                    loadedScripts++;
-                    if (loadedScripts === scriptsToLoad.length && !hasError) {
-                        init(false);
-                        saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
-                    }
-                } else {
-                    hasError = true;
-                    handleFatalError("LỖI KẾT NỐI", `Truy cập file bảo mật bị từ chối.`); 
+                console.warn("Bỏ qua file tải lỗi: ", item.url);
+                if (item.url.includes('cdmMap')) window.cdmMap = {}; 
+                if (item.url.includes('kamMap')) window.kamMap = {};
+                
+                loadedScripts++; // Vẫn đếm là đã xử lý xong để app tiếp tục chạy
+                if (loadedScripts === scriptsToLoad.length && !hasError) {
+                    init(false);
+                    saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
                 }
             };
             document.body.appendChild(script);
