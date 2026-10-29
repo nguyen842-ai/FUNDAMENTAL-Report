@@ -10,6 +10,7 @@ const cdmMap = {
 "1. HCMC|NGÔ QUANG VINH": "NGUYỄN THỊ THỦY - Team Miến",
 "1. HCMC|NGÔ THÀNH Ý": "NGUYỄN THỊ THỦY",
 "1. HCMC|NGUYỄN THỊ KIỀU OANH": "NGUYỄN THỊ THỦY - Team Miến",
+"1. HCMC|ĐINH DUY KHÔI": "NGUYỄN THỊ THỦY",
 "2. NORTH MEKONG|TRƯƠNG HÀO HIỆP": "PHẠM THỊ ANH THƯ",
 "2. NORTH MEKONG|PHẠM TRẦN QUANG": "PHẠM THỊ ANH THƯ",
 "2. NORTH MEKONG|HUỲNH VĂN GIÀU": "PHẠM THỊ ANH THƯ",
