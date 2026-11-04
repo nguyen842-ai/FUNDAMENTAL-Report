@@ -47,11 +47,10 @@
         .set-btn:hover { background: var(--badge-bg); }
         .set-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         
-        /* Nút Refresh & Print */
         .btn-refresh { color: var(--warning-border); border-color: var(--warning-border); display: flex; align-items: center; gap: 5px;}
         .btn-refresh:hover { background: var(--warning-bg); color: #ea580c; border-color: #ea580c;}
-        .btn-print { color: var(--primary); border-color: var(--primary); display: flex; align-items: center; gap: 5px;}
-        .btn-print:hover { background: rgba(59, 130, 246, 0.1); }
+        .btn-excel { color: var(--primary); border-color: var(--primary); display: flex; align-items: center; gap: 5px;}
+        .btn-excel:hover { background: rgba(59, 130, 246, 0.1); }
 
         input[type="range"] { cursor: pointer; max-width: 80px;}
 
@@ -107,7 +106,7 @@
         .sub-tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);}
 
         /* =========================================================
-           5. BẢNG HIỂN THỊ & ACCORDION
+           5. BẢNG HIỂN THỊ & ACCORDION & TRENDS
            ========================================================= */
         #table-wrapper-main { transition: opacity 0.2s ease; }
         
@@ -135,7 +134,12 @@
         .val-primary { color: var(--primary); font-weight: bold; }
         .val-success { color: var(--color-tot); font-weight: bold; }
 
-        /* Accordion (Nhân sự nghỉ việc & Special) */
+        .trend { font-size: 10px; margin-left: 5px; font-weight: bold; }
+        .trend-up { color: var(--color-tot); }
+        .trend-down { color: var(--color-khong-hq); }
+        .trend-eq { color: var(--text-sub); }
+
+        /* Accordion */
         .acc-group {
             margin-top: 30px; border-radius: var(--radius-md); border: 1px solid var(--border);
             background: var(--white); box-shadow: var(--card-shadow);
@@ -152,39 +156,9 @@
         .acc-group[open] .acc-summary::before { transform: rotate(90deg); }
         .acc-content { padding: 25px 20px 0 20px; background: var(--bg-color); border-radius: 0 0 var(--radius-md) var(--radius-md);}
 
-        /* Special Performance Accordion Colors */
         .special-group { border-color: rgba(59, 130, 246, 0.3); }
         .special-summary { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
         .special-summary:hover { background: rgba(59, 130, 246, 0.15); }
-
-        /* =========================================================
-           6. CẤU HÌNH KHI IN / XUẤT PDF
-           ========================================================= */
-        @media print {
-            body { background: white !important; color: black !important; font-size: 11px !important; }
-            /* Ẩn các phần không cần thiết */
-            .header, .main-tabs, .sub-tabs { display: none !important; }
-            .container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
-            
-            /* Tối ưu bảng hiển thị */
-            .table-container { box-shadow: none !important; border: none !important; max-height: none !important; overflow: visible !important;}
-            table { border-collapse: collapse !important; width: 100% !important; min-width: auto !important; }
-            th, td { padding: 8px !important; border: 1px solid #ccc !important; }
-            th { position: static !important; background: #e2e8f0 !important; color: black !important; }
-            .col-sticky-1, .col-sticky-2 { position: static !important; background: transparent !important; }
-            .entity-section { page-break-inside: avoid; margin-bottom: 25px !important; }
-            .entity-title { background: #cbd5e1 !important; color: black !important; border: 1px solid #ccc !important; }
-            
-            /* Tối ưu Accordion (Luôn mở khi in) */
-            .acc-group { border: none !important; box-shadow: none !important; margin-top: 15px !important; display: block !important; }
-            .acc-summary { background: #cbd5e1 !important; color: black !important; border: 1px solid #ccc !important; font-size: 1em !important; padding: 10px !important; }
-            .acc-summary::before { display: none !important; }
-            .acc-content { padding: 10px 0 !important; background: white !important; display: block !important; }
-            
-            /* Xoá màu nền/text riêng để in rõ */
-            .val-primary, .val-success, .metric-name { color: black !important; font-weight: normal !important; }
-            .row-highlight { background: transparent !important; }
-        }
     </style>
 </head>
 <body class="dark-mode">
@@ -212,16 +186,15 @@
                 </div>
                 <div class="status-divider"></div>
 
-                <!-- NÚT IN / TẢI PDF -->
+                <!-- NÚT XUẤT EXCEL -->
                 <div class="set-group">
-                    <button class="set-btn btn-print" onclick="printReport()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span data-i18n="btn_print">In / Tải PDF</span>
+                    <button class="set-btn btn-excel" onclick="exportToExcel()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span data-i18n="btn_excel">Tải file Excel</span>
                     </button>
                 </div>
                 <div class="status-divider"></div>
 
-                <!-- NÚT LÀM MỚI DATA -->
                 <div class="set-group">
                     <button class="set-btn btn-refresh" onclick="forceRefreshData()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-8.31l5.67-5.67"/></svg>
@@ -272,7 +245,8 @@
     </div>
 
     <div class="sub-tabs">
-        <button class="sub-tab-btn active" onclick="switchSubTab('cdm', this)">BY CDM</button>
+        <button class="sub-tab-btn active" onclick="switchSubTab('nationwide', this)">TOTAL NATIONWIDE</button>
+        <button class="sub-tab-btn" onclick="switchSubTab('cdm', this)">BY CDM</button>
         <button class="sub-tab-btn" onclick="switchSubTab('kam', this)">BY KAM</button>
         <button class="sub-tab-btn" onclick="switchSubTab('kae', this)">BY SALES TEAM</button>
     </div>
@@ -291,7 +265,8 @@
     let statusMap = {}; 
     let statusTracker = {}; 
     
-    let currentMainTab = 'tab_overview', currentSubTab = 'cdm';
+    // Đổi mặc định sang nationwide thay vì cdm
+    let currentMainTab = 'tab_overview', currentSubTab = 'nationwide'; 
     let TIME_COLS = [], CATS = []; 
     const METRICS = ["Coverage (outlets)", "Active Outlets", "Active Rate (%)", "AVG SKU/ invoice", "AVG Value/ invoice (VND)", "Performance (VND)"];
     const monthOrder = { "jan":1, "feb":2, "mar":3, "apr":4, "may":5, "jun":6, "jul":7, "aug":8, "sep":9, "oct":10, "nov":11, "dec":12 };
@@ -320,7 +295,7 @@
             inactive_staff: "Nhân sự thôi việc / Không hoạt động",
             special_perf: "Special Performance",
             btn_refresh: "Làm mới Data",
-            btn_print: "In / Tải PDF",
+            btn_excel: "Tải file Excel",
             confirm_refresh: "Xóa bộ nhớ đệm và tải lại dữ liệu mới nhất từ hệ thống?"
         },
         en: {
@@ -331,7 +306,7 @@
             inactive_staff: "Resigned / Inactive Staff",
             special_perf: "Special Performance",
             btn_refresh: "Refresh Data",
-            btn_print: "Print / Save PDF",
+            btn_excel: "Download Excel",
             confirm_refresh: "Clear cache and fetch the latest data from server?"
         }
     };
@@ -353,7 +328,7 @@
     changeLang(currentLang);
 
     // ======================================================================
-    // 2. UI CÀI ĐẶT & HELPERS
+    // 2. UI CÀI ĐẶT & EXPORT EXCEL
     // ======================================================================
     function changeTheme(theme) {
         if (theme === 'dark') document.body.classList.add('dark-mode');
@@ -388,11 +363,29 @@
         }
     }
 
-    // Hàm gọi in / xuất PDF
-    function printReport() {
-        // Tự động mở rộng các Accordion đang ẩn để in đầy đủ
-        document.querySelectorAll('details.acc-group').forEach(el => el.setAttribute('open', ''));
-        window.print();
+    // Logic tải Excel đơn giản mà không làm vỡ HTML/CSS hiện tại
+    function exportToExcel() {
+        let htmlContent = document.getElementById("table-wrapper-main").innerHTML;
+        // Bọc vào cấu trúc HTML cho Excel đọc tốt tiếng Việt
+        let excelFormat = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="utf-8" />
+                <style>
+                    table { border-collapse: collapse; width: 100%; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                    th { background-color: #f2f2f2; font-weight: bold; }
+                </style>
+            </head>
+            <body>${htmlContent}</body>
+            </html>
+        `;
+        let blob = new Blob(['\ufeff', excelFormat], { type: 'application/vnd.ms-excel' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `Fundamental_Report_${currentSubTab}.xls`;
+        a.click();
     }
 
     const fmt = (n) => new Intl.NumberFormat('en-US').format(Math.round(n || 0));
@@ -505,6 +498,7 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
+            d.nationwide = "Total Nationwide"; // Gán cột mặc định cho Sub-Tab Total Nationwide
             dbMaster.push(d);
         });
 
@@ -525,8 +519,8 @@
             d.kam = cleanName(d.raw_kam, true, d.area, d.month);
             d.cdm = getCdm(d.kam, d.area, d.month, d.raw_kam); 
             d.kae = cleanName(d.raw_kae, false, d.area, d.month);
+            d.nationwide = "Total Nationwide"; // Gán cột mặc định cho Sub-Tab Total Nationwide
             
-            // Tối ưu tạo InvId kết hợp Area, KAM để chống trùng lặp giữa các CDM
             d.invId = `${d.area || ''}_${d.kam || ''}_${d.cusCode}_${d.day || ''}_${d.week || d.wiso || ''}_${d.month || ''}`;
             
             dbSales.push(d);
@@ -587,14 +581,10 @@
         }
     }
 
-    function toggleKaeMenu() {
-        document.getElementById('kae-multi-select').classList.toggle('open');
-    }
+    function toggleKaeMenu() { document.getElementById('kae-multi-select').classList.toggle('open'); }
 
     document.addEventListener('click', function(e) {
-        if(!e.target.closest('#kae-multi-select')) {
-            document.getElementById('kae-multi-select').classList.remove('open');
-        }
+        if(!e.target.closest('#kae-multi-select')) { document.getElementById('kae-multi-select').classList.remove('open'); }
     });
 
     function populateKaeDropdown(options) {
@@ -627,11 +617,8 @@
     function handleKaeItem() {
         let allCb = document.getElementById('kae-all');
         let chks = document.querySelectorAll('.kae-chk:checked');
-        if(chks.length > 0) {
-            allCb.checked = false; 
-        } else {
-            allCb.checked = true; 
-        }
+        if(chks.length > 0) allCb.checked = false; 
+        else allCb.checked = true; 
         updateKaeDisplay();
         userTriggerUpdate('kae');
     }
@@ -639,9 +626,8 @@
     function updateKaeDisplay() {
         let allCb = document.getElementById('kae-all');
         let display = document.getElementById('kae-display');
-        if (allCb && allCb.checked) {
-            display.innerText = "-- Tất cả --";
-        } else {
+        if (allCb && allCb.checked) display.innerText = "-- Tất cả --";
+        else {
             let count = document.querySelectorAll('.kae-chk:checked').length;
             display.innerText = count + " KAE đã chọn";
         }
@@ -670,7 +656,7 @@
         executeWithLoading(renderActiveTab);
     }
 
-   function compileData(isTab2, groupKey) {
+    function compileData(isTab2, groupKey) {
         let entities = {}; 
         let entityCov = {};
         let fArea = getVal('flt-area'), fCdm = getVal('flt-cdm'), fKam = getVal('flt-kam'), fCat = getVal('flt-cat');
@@ -684,7 +670,7 @@
 
             let eName = d[groupKey];
             if (!entityCov[eName]) {
-                entityCov[eName] = { area: d.area, m: {} };
+                entityCov[eName] = { area: groupKey === 'nationwide' ? 'All Area' : d.area, m: {} };
                 TIME_COLS.forEach(m => entityCov[eName].m[m] = new Set());
             }
             if (TIME_COLS.includes(d.month)) entityCov[eName].m[d.month].add(d.cusCode);
@@ -698,7 +684,7 @@
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
-            if (!entities[eName]) entities[eName] = { area: d.area, brands: {} };
+            if (!entities[eName]) entities[eName] = { area: groupKey === 'nationwide' ? 'All Area' : d.area, brands: {} };
 
             let bKey = isTab2 ? d.cat : 'OVERVIEW';
             
@@ -711,14 +697,10 @@
                 let mx = entities[eName].brands[bKey].m[d.month];
                 let currentSales = Number(d.sales) || 0;
                 
-                // 1. Vẫn cộng dồn doanh số tổng
                 mx.sales += currentSales; 
                 
-                // 2. CHỈ đếm Khách Active và đếm SKU/Hóa đơn KHI CÓ DOANH SỐ > 0
                 if (currentSales > 0) {
                     mx.actSet.add(d.cusCode);
-                    
-                    // Gom nhóm theo ID hóa đơn và cộng dồn số dòng SKU
                     if (!mx.invMap[d.invId]) mx.invMap[d.invId] = 0;
                     mx.invMap[d.invId] += (Number(d.skuLines) || 0);
                 }
@@ -739,12 +721,12 @@
     }
 
   // ======================================================================
-    // 6. RENDER GIAO DIỆN CÓ GOM NHÓM
+    // 6. RENDER GIAO DIỆN CÓ GOM NHÓM & XU HƯỚNG TĂNG GIẢM
     // ======================================================================
     function renderActiveTab() {
         let isTab2 = currentMainTab === 'tab_brand';
         let container = document.getElementById('table-wrapper-main');
-        let labelMap = { 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE/DSR' };
+        let labelMap = { 'nationwide': 'NATIONWIDE', 'cdm': 'CDM', 'kam': 'KAM', 'kae': 'KAE/DSR' };
         let entityLabel = labelMap[currentSubTab];
 
         let { entities, entityCov } = compileData(isTab2, currentSubTab);
@@ -755,9 +737,7 @@
             return;
         }
 
-        let activeEntities = [];
-        let inactiveEntities = [];
-        let specialEntities = [];
+        let activeEntities = [], inactiveEntities = [], specialEntities = [];
 
         eNames.forEach(e => {
             let isInactive = statusMap[e] === '❌';
@@ -768,6 +748,33 @@
             else activeEntities.push(e);
         });
 
+        // Helper tính giá trị số học nguyên thuỷ của 1 tháng để dễ so sánh
+        const getRawValuesForMonth = (eName, bData, bName, mStr) => {
+            let cov = (entityCov[eName] && entityCov[eName].m[mStr]) ? entityCov[eName].m[mStr].size : 0;
+            let mx = bData.m[mStr];
+            let act = mx.actSet.size;
+            let sls = mx.sales;
+            let invKeys = Object.keys(mx.invMap);
+            let invs = invKeys.length;
+            let skus = 0;
+            invKeys.forEach(k => { skus += mx.invMap[k]; });
+            
+            let actRate = cov > 0 ? (act/cov)*100 : 0;
+            let avgSku = 0;
+            if (bName.toUpperCase() === 'M150' && invs > 0) avgSku = 1; 
+            else if (invs > 0) avgSku = skus/invs;
+            let avgVal = invs > 0 ? sls/invs : 0;
+            
+            return [cov, act, actRate, avgSku, avgVal, sls];
+        };
+
+        const getTrendArrow = (curr, prev) => {
+            if (prev === null) return ''; // Tháng đầu không so sánh
+            if (curr > prev) return `<span class="trend trend-up">▲</span>`;
+            if (curr < prev) return `<span class="trend trend-down">▼</span>`;
+            return `<span class="trend trend-eq">▬</span>`;
+        };
+
         const buildListHtml = (list) => {
             let htmlChunk = '';
             list.forEach(eName => {
@@ -776,6 +783,8 @@
                 if (isTab2 && brands.length === 0) return;
 
                 let icon = statusMap[eName] ? `${statusMap[eName]} ` : '';
+                // Với Nationwide không hiện icon trạng thái nghỉ việc
+                if(currentSubTab === 'nationwide') icon = '';
                 
                 htmlChunk += `<div class="entity-section">`;
                 htmlChunk += `<h3 class="entity-title">${entityLabel}: ${icon}${eName}</h3>`;
@@ -789,6 +798,10 @@
 
                 brands.forEach(bName => {
                     let bData = entityData.brands[bName];
+                    
+                    // Tính sẵn toàn bộ mảng dữ liệu cho Brand này
+                    let monthDataMatrix = TIME_COLS.map(m => getRawValuesForMonth(eName, bData, bName, m));
+
                     for(let i=0; i<6; i++) {
                         let rHtml = '';
                         if (i === 0) {
@@ -798,36 +811,21 @@
                         
                         rHtml += `<td class="metric-name">${METRICS[i]}</td>`;
                         
-                        TIME_COLS.forEach(m => {
-                            let cov = (entityCov[eName] && entityCov[eName].m[m]) ? entityCov[eName].m[m].size : 0;
-                            let mx = bData.m[m];
+                        TIME_COLS.forEach((m, mIdx) => {
+                            let currValNum = monthDataMatrix[mIdx][i];
+                            let prevValNum = mIdx > 0 ? monthDataMatrix[mIdx-1][i] : null;
                             
-                            // 1. Gán biến cơ bản
-                            let act = mx.actSet.size;
-                            let sls = mx.sales;
+                            let valStr = '';
+                            let arrow = getTrendArrow(currValNum, prevValNum);
+
+                            if (i === 0) valStr = fmt(currValNum); 
+                            else if (i === 1) valStr = `<span class="val-primary">${fmt(currValNum)}</span>`; 
+                            else if (i === 2) valStr = fmtPct(currValNum); 
+                            else if (i === 3) valStr = fmtFloat(currValNum);
+                            else if (i === 4) valStr = fmt(currValNum); 
+                            else if (i === 5) valStr = `<span class="val-success">${fmt(currValNum)}</span>`; 
                             
-                            // 2. Tính số lượng hóa đơn và tổng SKU
-                            let invKeys = Object.keys(mx.invMap);
-                            let invs = invKeys.length;
-                            
-                            let skus = 0;
-                            invKeys.forEach(k => { skus += mx.invMap[k]; });
-                            
-                            let val = 0;
-                            if (i === 0) val = fmt(cov); 
-                            else if (i === 1) val = `<span class="val-primary">${fmt(act)}</span>`; 
-                            else if (i === 2) val = fmtPct(cov > 0 ? (act/cov)*100 : 0); 
-                            else if (i === 3) {
-                                // Nếu là nhãn M150 và có phát sinh hóa đơn (invs > 0) thì ép cứng bằng 1
-                                if (bName.toUpperCase() === 'M150' && invs > 0) {
-                                    val = fmtFloat(1);
-                                } else {
-                                    val = fmtFloat(invs > 0 ? (skus/invs) : 0);
-                                }
-                            }
-                            else if (i === 4) val = fmt(invs > 0 ? (sls/invs) : 0); 
-                            else if (i === 5) val = `<span class="val-success">${fmt(sls)}</span>`; 
-                            rHtml += `<td>${val}</td>`;
+                            rHtml += `<td>${valStr} ${arrow}</td>`;
                         });
                         htmlChunk += `<tr class="${i%2===0 ? 'row-highlight' : ''}">${rHtml}</tr>`;
                     }
@@ -958,7 +956,6 @@
 
         var scriptsToLoad = [];
         localScripts.forEach(file => scriptsToLoad.push({ url: file + version, type: 'local' }));
-        // Bỏ lệnh throw new Error để không chết app khi thiếu file trên Supabase
         signedUrlsData.forEach(item => {
             if (!item.error && item.signedUrl) {
                 scriptsToLoad.push({ url: item.signedUrl, type: 'secure' });
@@ -983,13 +980,12 @@
                 }
             };
             
-            // Xử lý khi thẻ script không tải được (lỗi 404, mất mạng)
             script.onerror = function() {
                 console.warn("Bỏ qua file tải lỗi: ", item.url);
                 if (item.url.includes('cdmMap')) window.cdmMap = {}; 
                 if (item.url.includes('kamMap')) window.kamMap = {};
                 
-                loadedScripts++; // Vẫn đếm là đã xử lý xong để app tiếp tục chạy
+                loadedScripts++;
                 if (loadedScripts === scriptsToLoad.length && !hasError) {
                     init(false);
                     saveToCache({ rawMaster: window.rawMasterCache, rawSales: window.rawSalesCache, date: todayStr });
