@@ -506,7 +506,7 @@
             if(!d || !d.cusCode) return;
             if(d.cat) {
                 let catName = String(d.cat).trim().toUpperCase();
-                if (catName === 'DISPLAY' || catName === 'DOVEMEN') return; 
+                if (catName === 'DISPLAY') return; 
                 d.cat = catName;
                 activeCats.add(catName);
             }
