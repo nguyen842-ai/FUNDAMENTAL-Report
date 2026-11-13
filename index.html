@@ -681,6 +681,20 @@
             if (fCdm !== 'ALL' && d.cdm !== fCdm) return;
             if (fKam !== 'ALL' && d.kam !== fKam) return;
             if (!fKae.includes('ALL') && !fKae.includes(d.kae)) return;
+            
+            // --- FIX YÊU CẦU: BỔ SUNG CUSCODE TỪ DB SALES VÀO COVERAGE
+            // Điều này đảm bảo những nhân sự nghỉ việc (thường bị HR xóa khỏi Master nhưng họ vẫn có Sales trong hệ thống của tháng) 
+            // Vẫn được tính tổng số lượng điểm bán đã bao phủ chính xác trong tháng đó.
+            let eNameCov = d[groupKey];
+            if (!entityCov[eNameCov]) {
+                entityCov[eNameCov] = { area: groupKey === 'nationwide' ? 'All Area' : d.area, m: {} };
+                TIME_COLS.forEach(m => entityCov[eNameCov].m[m] = new Set());
+            }
+            if (TIME_COLS.includes(d.month)) {
+                entityCov[eNameCov].m[d.month].add(d.cusCode);
+            }
+            // -------------------------------------------------------------
+
             if (fCat !== 'ALL' && d.cat !== fCat) return; 
 
             let eName = d[groupKey];
